@@ -44,15 +44,18 @@ const couponCopy: Record<ResultKey, { title: string; benefit: string; descriptio
   },
 };
 
+const nativeCouponUrls: Partial<Record<ResultKey, string>> = {
+  meal: process.env.LINE_MEAL_COUPON_URL || "https://lin.ee/YYe02WS",
+  sweet: process.env.LINE_SWEET_COUPON_URL || "https://lin.ee/98j6aS5",
+};
+
 export const pushResultCoupon = async ({
   lineUserId,
   result,
-  couponCode,
   retryKey,
 }: {
   lineUserId: string;
   result: ResultKey;
-  couponCode: string;
   retryKey: string;
 }) => {
   const accessToken = process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN;
@@ -62,6 +65,8 @@ export const pushResultCoupon = async ({
   const appUrl = process.env.NEXT_PUBLIC_LIFF_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "https://kyujitsu-shindan.vercel.app/?source=line";
+  const nativeCouponUrl = nativeCouponUrls[result];
+  const isNativeCoupon = Boolean(nativeCouponUrl);
 
   const response = await fetch("https://api.line.me/v2/bot/message/push", {
     method: "POST",
@@ -98,19 +103,47 @@ export const pushResultCoupon = async ({
               { type: "text", text: copy.benefit, weight: "bold", size: "xxl", color: result === "sweet" ? "#B77B00" : "#D94B32" },
               { type: "text", text: copy.description, size: "sm", color: "#625646", wrap: true },
               { type: "separator", margin: "md" },
-              { type: "text", text: `クーポン番号  ${couponCode}`, size: "sm", weight: "bold", color: "#2C2119" },
-              { type: "text", text: "土日・当日限り・1人1回まで", size: "xs", color: "#75695B" },
+              {
+                type: "text",
+                text: isNativeCoupon
+                  ? "対象日：8月22日・23日・29日・30日"
+                  : "参加権は診断結果に保存されています",
+                size: "sm",
+                weight: "bold",
+                color: "#2C2119",
+                wrap: true,
+              },
+              {
+                type: "text",
+                text: isNativeCoupon ? "LINE標準クーポン／1人1回まで" : "8月22日から・店内限定",
+                size: "xs",
+                color: "#75695B",
+              },
             ],
           },
           footer: {
             type: "box",
             layout: "vertical",
-            contents: [{
-              type: "button",
-              style: "primary",
-              color: "#195D48",
-              action: { type: "uri", label: "診断結果を確認", uri: appUrl },
-            }],
+            contents: isNativeCoupon && nativeCouponUrl
+              ? [
+                {
+                  type: "button",
+                  style: "primary",
+                  color: "#195D48",
+                  action: { type: "uri", label: "LINEクーポンを開く", uri: nativeCouponUrl },
+                },
+                {
+                  type: "button",
+                  style: "link",
+                  action: { type: "uri", label: "診断結果を確認", uri: appUrl },
+                },
+              ]
+              : [{
+                type: "button",
+                style: "primary",
+                color: "#195D48",
+                action: { type: "uri", label: "参加PASSを確認", uri: appUrl },
+              }],
           },
         },
       }],

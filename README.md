@@ -17,13 +17,13 @@ LINE配信用URLはLIFF URLを使います。LIFFのIDトークンをVercel側�
 
 LINE LoginチャンネルとMessaging APIチャンネルは、必ず同じLINE Developersプロバイダー内に作成してください。
 
-診断結果ごとに次の内容をMessaging APIで本人へ送ります。
+診断結果ごとに次の内容をMessaging APIで本人へ送ります。御膳・甘味はLINE標準クーポンへのリンクを使うため、店頭での番号入力は不要です。
 
 - ぬりえ：季節のぬりえ参加PASS
-- 御膳：選べる御膳＋和紅茶 120円OFF
-- 甘味：二色わらび餅＋和紅茶 120円OFF
+- 御膳：選べる御膳＋和紅茶 120円OFF（LINE標準クーポン）
+- 甘味：二色わらび餅＋和紅茶 120円OFF（LINE標準クーポン）
 
-店頭では `/redeem` をスタッフ端末で開き、クーポン番号とスタッフPINを入力して使用済みにします。
+会計時はお客様がLINE標準クーポンを開き、スタッフ確認後にお客様自身で「使用済みにする」を押します。`/redeem` は独自クーポンの予備確認画面として残しています。
 
 ## Supabase
 
@@ -45,6 +45,8 @@ NEXT_PUBLIC_LIFF_URL=https://liff.line.me/LIFF_ID
 NEXT_PUBLIC_APP_URL=https://kyujitsu-shindan.vercel.app/?source=line
 LINE_LOGIN_CHANNEL_ID=LINE LoginのチャンネルID
 LINE_MESSAGING_CHANNEL_ACCESS_TOKEN=Messaging APIの長期チャネルアクセストークン
+LINE_MEAL_COUPON_URL=https://lin.ee/YYe02WS
+LINE_SWEET_COUPON_URL=https://lin.ee/98j6aS5
 DIAGNOSIS_CAMPAIGN_ID=weekend-2026-08-22
 DIAGNOSIS_EVENT_START=2026-08-22
 COUPON_STAFF_PIN=スタッフだけが知るPIN
@@ -64,9 +66,9 @@ LINE：https://liff.line.me/LIFF_ID
 
 `docs/google-sheets-sync.gs` を対象スプレッドシートのApps Scriptへ追加し、VercelとApps Scriptの両方に同じ `SHEETS_SYNC_TOKEN` を登録します。`SUPABASE_SECRET_KEY` はApps Scriptへ登録しません。`installHolidayDiagnosisSync` を1回実行すると、5分ごとに「参加ログ」「診断ファネル」「診断集計」へ反映されます。
 
-「診断ファネル」ではLINE表示名、個人を識別する末尾6文字、開封・開始・完了、診断結果、回答、クーポン送信・利用まで確認できます。完全なLINEユーザーIDはスプレッドシートへ出しません。
+「診断ファネル」ではLINE表示名、個人を識別する末尾6文字、開封・開始・完了、診断結果、回答、クーポン案内送信まで確認できます。完全なLINEユーザーIDはスプレッドシートへ出しません。
 
-「診断集計」では診断クリック率、完了率、結果別人数、クーポン利用率を自動集計します。LINEメッセージ自体の配信数と開封数だけは個人別に取得できないため、LINE Official Account Managerの集計値を手入力します。
+「診断集計」では診断クリック率、完了率、結果別人数、クーポン利用率を集計します。LINEメッセージの配信数・開封数とLINE標準クーポンの使用者数は、LINE Official Account Managerの集計値を手入力します。取引ごとのスタッフ入力は不要です。
 
 ## ローカル確認
 

@@ -509,7 +509,7 @@ export default function Home() {
                 </figure>
               </div>
               <div className="price-row"><del>和紅茶 通常495円</del><b>セット時375円</b></div>
-              <p>土日に、お好きな御膳と和紅茶を一緒にご注文で、合計から120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
+              <p>対象日に、お好きな御膳と和紅茶を一緒にご注文で、合計から120円OFF。LINEへ届く標準クーポンを会計時にお見せください。</p>
             </div>
           )}
 
@@ -529,19 +529,25 @@ export default function Home() {
                 <figcaption>二色わらび餅と和紅茶</figcaption>
               </figure>
               <div className="price-row"><del>通常 1,243円</del><b>1,123円</b></div>
-              <p>土日に使える、診断した方だけの120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
+              <p>対象日に使える、診断した方だけの120円OFF。LINEへ届く標準クーポンを会計時にお見せください。</p>
             </div>
           )}
 
-          <div className="validity">
-            <span>{saved.result === "coloring" ? "本イベント参加番号" : "本日の参加番号"}</span><b>{formatPassNumber(saved)}</b>
-            <small>{saved.result === "coloring" ? "8月22日以降の土日にこの端末で有効" : "土日・当日限り・1回まで"}</small>
-          </div>
+          {saved.result === "coloring" && (
+            <div className="validity">
+              <span>本イベント参加番号</span><b>{formatPassNumber(saved)}</b>
+              <small>8月22日以降の土日にこの端末で有効</small>
+            </div>
+          )}
           {saved.couponCode && (
             <div className={`line-coupon-status ${saved.couponSent ? "sent" : "pending"}`}>
-              <span>{saved.couponSent ? "LINEへ送信済み" : "LINE送信を確認中"}</span>
-              <strong>{saved.couponCode}</strong>
-              <small>店頭でスタッフが使用済み処理をすると、再利用できません。</small>
+              <span>{saved.couponSent ? "LINEへ案内を送信済み" : "LINE送信を確認中"}</span>
+              <strong>{saved.result === "coloring" ? "ぬりえ参加PASS" : "LINE標準クーポン"}</strong>
+              <small>
+                {saved.result === "coloring"
+                  ? "参加時は診断結果画面を確認してください。"
+                  : "会計時にLINEのクーポン画面を提示し、お客様自身で使用済みにします。"}
+              </small>
             </div>
           )}
           {demo && <button className="text-button" onClick={restartForDemo}>デモ用：結果をリセット</button>}

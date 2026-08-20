@@ -46,7 +46,7 @@ function writeParticipationSheet_(spreadsheet, records) {
     'ぬりえ参加権', '先行お試し済み', '作品状態', '初回登録日時',
     '最終更新日時', '卓上QR読込数', 'ぬりえ開始数', '作品送信数',
     'キャンペーン', 'LINE表示名', 'LINE識別子', '回答内容',
-    'クーポン番号', 'クーポン種別', '送信状態', '送信日時', '利用日時'
+    '内部発行ID', 'クーポン種別', '案内送信状態', '案内送信日時', '独自承認日時（予備）'
   ];
   const resultLabels = {
     coloring: 'ぬりえ参加', meal: '選べる御膳＋和紅茶', sweet: '二色わらび餅＋和紅茶'
@@ -86,8 +86,8 @@ function writeFunnelSheet_(spreadsheet, records) {
   const headers = [
     'キャンペーン', 'LINE表示名', 'LINE識別子', '流入元', '初回開封日時',
     '最終開封日時', '開封回数', '診断開始日時', '診断完了日時', '診断日',
-    '診断結果', '回答内容', '参加番号', 'クーポン番号', 'クーポン種別',
-    '送信状態', '送信日時', '利用日時', '最終更新日時'
+    '診断結果', '回答内容', '参加番号', '内部発行ID', 'クーポン種別',
+    '案内送信状態', '案内送信日時', '独自承認日時（予備）', '最終更新日時'
   ];
   const resultLabels = {
     coloring: 'ぬりえ参加', meal: '選べる御膳＋和紅茶', sweet: '二色わらび餅＋和紅茶'
@@ -117,15 +117,22 @@ function writeFunnelSheet_(spreadsheet, records) {
 function writeSummarySheet_(spreadsheet, records) {
   const sheet = spreadsheet.getSheetByName('診断集計') || spreadsheet.insertSheet('診断集計');
   const campaignId = records.length ? records[0].campaign_id : '';
+  const isNativeCouponLayout = sheet.getRange('A1').getValue() === '休日診断 KPI（LINE標準クーポン）';
   const previousCampaignId = sheet.getRange('B2').getValue();
-  const delivered = previousCampaignId === campaignId ? Number(sheet.getRange('B3').getValue() || 0) : 0;
-  const lineOpened = previousCampaignId === campaignId ? Number(sheet.getRange('B4').getValue() || 0) : 0;
+  const keepManualValues = isNativeCouponLayout && previousCampaignId === campaignId;
+  const delivered = keepManualValues ? Number(sheet.getRange('B3').getValue() || 0) : 0;
+  const lineOpened = keepManualValues ? Number(sheet.getRange('B4').getValue() || 0) : 0;
+  const mealCouponUsed = keepManualValues ? Number(sheet.getRange('B5').getValue() || 0) : 0;
+  const sweetCouponUsed = keepManualValues ? Number(sheet.getRange('B6').getValue() || 0) : 0;
   const current = records.filter(function(record) { return record.campaign_id === campaignId; });
   const appOpened = current.length;
   const started = current.filter(function(record) { return Boolean(record.diagnosis_started_at); }).length;
   const completed = current.filter(function(record) { return Boolean(record.diagnosis_completed_at); }).length;
-  const couponSent = current.filter(function(record) { return record.coupon_send_status === 'sent'; }).length;
-  const redeemed = current.filter(function(record) { return Boolean(record.coupon_redeemed_at); }).length;
+  const paidCouponSent = current.filter(function(record) {
+    return (record.diagnosis_result === 'meal' || record.diagnosis_result === 'sweet') &&
+      record.coupon_send_status === 'sent';
+  }).length;
+  const nativeCouponUsed = mealCouponUsed + sweetCouponUsed;
   const resultCounts = { coloring: 0, meal: 0, sweet: 0 };
   current.forEach(function(record) {
     if (Object.prototype.hasOwnProperty.call(resultCounts, record.diagnosis_result)) {
@@ -133,34 +140,36 @@ function writeSummarySheet_(spreadsheet, records) {
     }
   });
 
-  sheet.getRange('A1:E15').breakApart();
+  sheet.getRange('A1:E17').breakApart();
   sheet.clearContents();
-  sheet.getRange('A1:B1').merge().setValue('休日診断 KPI').setBackground('#195d48').setFontColor('#ffffff').setFontWeight('bold');
-  sheet.getRange('A2:B12').setValues([
+  sheet.getRange('A1:B1').merge().setValue('休日診断 KPI（LINE標準クーポン）').setBackground('#195d48').setFontColor('#ffffff').setFontWeight('bold');
+  sheet.getRange('A2:B15').setValues([
     ['キャンペーン', campaignId],
     ['LINE配信数（手入力）', delivered],
     ['LINEメッセージ開封数（手入力）', lineOpened],
+    ['御膳クーポン使用者数（LINE手入力）', mealCouponUsed],
+    ['わらび餅クーポン使用者数（LINE手入力）', sweetCouponUsed],
     ['診断ページ開封者数', appOpened],
     ['診断開始者数', started],
     ['診断完了者数', completed],
-    ['クーポン送信者数', couponSent],
-    ['クーポン利用者数', redeemed],
+    ['有料セットクーポン案内送信者数', paidCouponSent],
+    ['LINEクーポン使用者数（合計）', nativeCouponUsed],
     ['LINEメッセージ開封率', delivered ? lineOpened / delivered : 0],
     ['診断クリック率', delivered ? appOpened / delivered : 0],
-    ['診断完了率', appOpened ? completed / appOpened : 0]
+    ['診断完了率', appOpened ? completed / appOpened : 0],
+    ['LINEクーポン利用率', paidCouponSent ? nativeCouponUsed / paidCouponSent : 0]
   ]);
-  sheet.getRange('A13:B13').setValues([['クーポン利用率', couponSent ? redeemed / couponSent : 0]]);
   sheet.getRange('D1:E1').merge().setValue('診断結果別').setBackground('#195d48').setFontColor('#ffffff').setFontWeight('bold');
   sheet.getRange('D2:E4').setValues([
     ['ぬりえ参加', resultCounts.coloring],
     ['御膳＋和紅茶', resultCounts.meal],
     ['二色わらび餅＋和紅茶', resultCounts.sweet]
   ]);
-  sheet.getRange('B10:B13').setNumberFormat('0.0%');
-  sheet.getRange('A1:E13').setVerticalAlignment('middle');
+  sheet.getRange('B12:B15').setNumberFormat('0.0%');
+  sheet.getRange('A1:E15').setVerticalAlignment('middle');
   sheet.autoResizeColumns(1, 5);
-  sheet.getRange('A15').setValue('※LINE配信数・LINEメッセージ開封数だけは、LINE Official Account Managerの集計値を入力してください。');
-  sheet.getRange('A15:E15').merge().setFontColor('#75695b').setFontSize(9);
+  sheet.getRange('A17').setValue('※LINE配信数・メッセージ開封数・2種類のクーポン使用者数は、LINE Official Account Managerの前日までの集計値を入力してください。取引ごとの入力は不要です。');
+  sheet.getRange('A17:E17').merge().setFontColor('#75695b').setFontSize(9);
 }
 
 function formatAnswers_(answers) {

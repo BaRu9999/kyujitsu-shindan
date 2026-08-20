@@ -89,7 +89,6 @@ export async function POST(request: Request) {
       const delivery = await pushResultCoupon({
         lineUserId: lineUser.sub,
         result: campaignUser.diagnosis_result,
-        couponCode: campaignUser.coupon_code,
         retryKey: campaignUser.id,
       });
       campaignUser = await callSupabaseRpc<CampaignUser>(config, "mark_diagnosis_coupon_delivery", {
