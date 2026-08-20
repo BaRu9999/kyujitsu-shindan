@@ -1,4 +1,5 @@
 import { verifyColoringEntryToken } from "@/app/lib/coloring-entry";
+import { buildLstepSegmentKeyword, buildLstepSegmentUrl } from "@/app/lib/segmentation";
 
 export async function POST(request: Request) {
   const secret = process.env.COLORING_ENTRY_SECRET;
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
     if (claims.mode !== "trial") {
       return Response.json({ error: "trial_only" }, { status: 403 });
     }
+    const officialAccountId = process.env.LINE_OFFICIAL_ACCOUNT_ID || "@958ctvuh";
     return Response.json({
       ok: true,
       entry: {
@@ -24,6 +26,8 @@ export async function POST(request: Request) {
         palette: claims.palette,
         coloring: claims.coloring,
         companion: claims.companion,
+        segmentKeyword: buildLstepSegmentKeyword("coloring", claims.companion),
+        segmentUrl: buildLstepSegmentUrl("coloring", claims.companion, officialAccountId),
         expiresAt: claims.expiresAt,
       },
     });
