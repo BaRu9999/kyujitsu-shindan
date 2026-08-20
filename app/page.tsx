@@ -120,6 +120,7 @@ export default function Home() {
   const [lineIdToken, setLineIdToken] = useState("");
   const [lineStatus, setLineStatus] = useState<LineStatus>("inactive");
   const [lineError, setLineError] = useState("");
+  const [coloringEntryError, setColoringEntryError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -145,7 +146,7 @@ export default function Home() {
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
     }
-    if (nextSource === "line") {
+    if (["line", "poster", "table"].includes(nextSource)) {
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
       if (!liffId) {
         queueMicrotask(() => {
@@ -180,7 +181,13 @@ export default function Home() {
             const existing = normalizeSavedDiagnosis(data.diagnosis as SavedDiagnosis);
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
             setSaved(existing);
-            setView("result");
+            if (nextSource === "table" && existing.result === "coloring" && effectiveDay >= EVENT_START) {
+              setView("coloring-ready");
+            } else if (effectiveDay < EVENT_START && existing.result === "coloring" && !existing.previewUsed) {
+              setView("preview-gallery");
+            } else {
+              setView("result");
+            }
           } else {
             setSaved(null);
             setView("intro");
@@ -237,7 +244,7 @@ export default function Home() {
       return;
     }
 
-    if (source === "line" && lineIdToken) {
+    if (["line", "poster", "table"].includes(source) && lineIdToken) {
       setSubmitting(true);
       setLineError("");
       try {
@@ -287,7 +294,7 @@ export default function Home() {
   };
 
   const startDiagnosis = async () => {
-    if (source === "line") {
+    if (["line", "poster", "table"].includes(source)) {
       if (!lineIdToken) return;
       setSubmitting(true);
       setLineError("");
@@ -308,17 +315,59 @@ export default function Home() {
     setView("question");
   };
 
-  const beginColoring = (trial: boolean) => {
+  const beginColoring = async (trial: boolean) => {
+    if (!saved || ready) return;
     setReady(true);
-    if (!saved) return;
-    const updated = trial && !saved.previewUsed ? { ...saved, previewUsed: true } : saved;
-    if (updated !== saved) {
+    setColoringEntryError("");
+
+    if (demo) {
+      const updated = trial && !saved.previewUsed ? { ...saved, previewUsed: true } : saved;
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       setSaved(updated);
+      void syncParticipation(updated, trial ? "preview_started" : "coloring_started", { coloring: selectedColoring });
+      return;
     }
-    void syncParticipation(updated, trial ? "preview_started" : "coloring_started", {
-      coloring: selectedColoring,
-    });
+
+    if (!lineIdToken) {
+      setColoringEntryError("LINEから参加情報を確認できませんでした。LINE内でこの画面を開き直してください。");
+      setReady(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/coloring/entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idToken: lineIdToken,
+          mode: trial ? "trial" : "event",
+          source,
+          coloring: selectedColoring,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.entryUrl) {
+        const messages: Record<string, string> = {
+          trial_already_used: "お試しぬりえはすでに利用済みです。8月22日以降は卓上QRから本参加できます。",
+          trial_period_ended: "先行お試し期間は終了しました。店内の卓上QRから本イベントへ参加してください。",
+          event_not_started: "本イベントは8月22日から始まります。",
+          table_qr_required: "本参加は店内の卓上QRから始めてください。",
+          coloring_pass_not_found: "このLINEアカウントのぬりえ参加PASSを確認できませんでした。",
+          coloring_entry_not_configured: "ぬりえギャラリーとの接続設定がまだ完了していません。",
+        };
+        throw new Error(messages[data.error] || "ぬりえギャラリーを開けませんでした。");
+      }
+
+      if (trial) {
+        const updated = { ...saved, previewUsed: true };
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        setSaved(updated);
+      }
+      window.location.assign(data.entryUrl);
+    } catch (error) {
+      setColoringEntryError(error instanceof Error ? error.message : "ぬりえギャラリーを開けませんでした。");
+      setReady(false);
+    }
   };
 
   const renderHeader = () => (
@@ -419,11 +468,13 @@ export default function Home() {
             ))}
           </div>
           {!ready ? (
-            <button className="primary-button" onClick={() => beginColoring(isTrial)}>{isTrial ? "このぬりえを試す" : "このぬりえで始める"}</button>
+            <button className="primary-button" onClick={() => void beginColoring(isTrial)}>{isTrial ? "このぬりえを試す" : "このぬりえで始める"}</button>
           ) : (
             <div className="ready-card" role="status">
               <strong>「{selectedColoring}」を選びました</strong>
-              <span>{isTrial ? "先行お試しは使用済みです。8月22日は卓上QRからすぐ本参加できます。" : "ぬりえ画面との接続準備ができています"}</span>
+              <span>{demo
+                ? (isTrial ? "先行お試しは使用済みです。8月22日は卓上QRからすぐ本参加できます。" : "ぬりえ画面との接続準備ができています")
+                : "ぬりえギャラリーを開いています…"}</span>
               <em className={`gallery-stamp ${isAdvance ? "advance" : "same-day"}`}>
                 {isTrial
                   ? "本番作品には「先行参加」スタンプが付きます"
@@ -431,6 +482,7 @@ export default function Home() {
               </em>
             </div>
           )}
+          {coloringEntryError && <p className="form-error" role="alert">{coloringEntryError}</p>}
           <p className="token-line">本参加番号 <b>{formatPassNumber(saved)}</b></p>
         </section>
         <Decorations />
@@ -595,7 +647,7 @@ export default function Home() {
         <p className="hero-kicker">4つのことばでわかる</p>
         <h1><span>今日の</span><br />休日診断</h1>
         <p className="hero-copy">今の気分に合う、店内での過ごし方をご案内します。考えすぎず、気になることばを選んでください。</p>
-        {source === "line" && lineStatus === "ready" && <div className="line-ready-note"><b>LINE本人確認済み</b><span>このキャンペーンの診断は1人1回です。結果別クーポンは診断後にLINEへ届きます。</span></div>}
+        {["line", "poster", "table"].includes(source) && lineStatus === "ready" && <div className="line-ready-note"><b>LINE本人確認済み</b><span>このキャンペーンの診断は1人1回です。結果別クーポンは診断後にLINEへ届きます。</span></div>}
         {isPreviewPeriod && <div className="prelaunch-note"><b>ぬりえタイプの方限定</b><span>お試しギャラリーを1回楽しめて、8月22日の本参加権も保存されます。</span></div>}
         <button className="primary-button hero-button" onClick={() => void startDiagnosis()} disabled={submitting}>{submitting ? "確認中…" : "診断をはじめる"} <span>→</span></button>
         {lineError && <p className="form-error" role="alert">{lineError}</p>}

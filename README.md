@@ -8,6 +8,7 @@
 - 参加区分：先行参加／当日参加
 - 流入元：ポスター／LINE／卓上QR
 - 先行お試し、卓上QR読込、本番ぬりえ開始、作品送信
+- お試しぬりえはLINEユーザーごとに1回だけ、本番は先行参加者だけ特別カラーパレットを解放
 - LINE診断の個人別開封、開始、完了、回答内容
 - 結果別クーポンの送信、利用状況
 
@@ -47,20 +48,35 @@ LINE_LOGIN_CHANNEL_ID=LINE LoginのチャンネルID
 LINE_MESSAGING_CHANNEL_ACCESS_TOKEN=Messaging APIの長期チャネルアクセストークン
 LINE_MEAL_COUPON_URL=https://lin.ee/YYe02WS
 LINE_SWEET_COUPON_URL=https://lin.ee/98j6aS5
-DIAGNOSIS_CAMPAIGN_ID=weekend-2026-08-22
+DIAGNOSIS_CAMPAIGN_ID=weekend-2026-08-22-native
 DIAGNOSIS_EVENT_START=2026-08-22
+COLORING_GALLERY_URL=https://ぬりえギャラリーのVercelドメイン/
+COLORING_ENTRY_SECRET=両方のVercelプロジェクトに設定する32文字以上の同一ランダム値
 COUPON_STAFF_PIN=スタッフだけが知るPIN
 ```
 
-`SUPABASE_SECRET_KEY` と `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` はVercelサーバー専用です。ソースコード、ブラウザ、Apps Script、チャットへ記載しないでください。
+`SUPABASE_SECRET_KEY`、`LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`、`COLORING_ENTRY_SECRET` はVercelサーバー専用です。ソースコード、ブラウザ、Apps Script、チャットへ記載しないでください。
+
+`COLORING_ENTRY_SECRET` は休日診断とぬりえギャラリーの両プロジェクトへ、同じ値を設定します。休日診断が発行した有効時間つき参加トークンだけを、ぬりえギャラリーが受け付けます。
+
+## 先行お試しから本参加まで
+
+1. LINEの休日診断で「ぬりえ参加」になった人へ先行参加PASSを保存
+2. 8月21日までは、お試しギャラリーの参加URLを1回だけ発行
+3. お試し作品は本番の作品提出・特典付与の対象外
+4. 8月22日以降は店内の卓上QRからLINE本人確認
+5. 先行参加PASSは「金茶・抹茶・桜・藍」の限定色を追加、当日参加PASSはスタンダード8色
+6. 作品データへ先行参加／当日参加とパレット区分を保存
 
 ## QRのURL
 
 ```text
-ポスター：https://公開URL/?source=poster
-LINE：https://liff.line.me/LIFF_ID
-卓上：https://公開URL/?source=table
+ポスター：https://liff.line.me/LIFF_ID?source=poster
+LINE：https://liff.line.me/LIFF_ID?source=line
+卓上：https://liff.line.me/LIFF_ID?source=table
 ```
+
+1人1回判定と先行参加特典をLINEユーザーに結び付けるため、卓上QRも通常のVercel URLではなくLIFF URLを使用します。
 
 ## Googleスプレッドシート
 
