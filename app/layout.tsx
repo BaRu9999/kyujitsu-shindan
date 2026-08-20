@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./trial-preview-overrides.css";
 
 export const metadata: Metadata = {
   title: "休日診断",
