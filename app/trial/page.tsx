@@ -106,11 +106,11 @@ export default function TrialPage() {
 
     {!loading && !error && entry && complete && <section className={`${styles.card} ${styles.status}`}>
       <div className={styles.statusMark}>✓</div><p className={styles.kicker}>TRIAL COMPLETED</p><h1 className={styles.title}>お試しぬりえ完成！</h1>
-      <p className={styles.lead}>先行参加特典を獲得しました。下のボタンからLINEを開いて参加権と診断分類を保存してください。</p>
+      <p className={styles.lead}>先行参加特典を獲得しました。下のボタンからLINEを開いて受け取りを完了してください。</p>
       <div className={styles.completeArt}>{artwork}</div>
       <div className={styles.perk}><strong>本番参加で特別カラー解放</strong><br/>金茶・抹茶・桜・藍の4色が追加されます。</div>
       <a className={styles.lineButton} href={linePassUrl}>LINEで参加権を受け取る</a>
-      <p className={styles.lineHelp}>LINEが開いたら「{segmentKeyword}」を送信してください。同行者と診断結果に応じたLステップタグを付けられます。</p>
+      <p className={styles.lineHelp}>LINEが開いたら「{segmentKeyword}」をそのまま送信してください。送信後、参加権の受け取りが完了します。</p>
       <p className={styles.small}>スマートフォンのLINEから操作してください。本イベントでは店内の卓上QRから参加できます。</p>
     </section>}
   </div></main>;
