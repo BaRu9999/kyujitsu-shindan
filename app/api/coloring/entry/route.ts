@@ -25,6 +25,7 @@ type Participant = {
 
 const campaignId = () => process.env.DIAGNOSIS_CAMPAIGN_ID || "weekend-2026-08-22";
 const eventStart = () => process.env.DIAGNOSIS_EVENT_START || "2026-08-22";
+const TRIAL_GALLERY_URL = "https://nurie-gallery-kizl.vercel.app/trial/";
 const japanDayKey = () => new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Tokyo",
   year: "numeric",
@@ -161,11 +162,7 @@ export async function POST(request: Request) {
       palette,
       coloring,
     }, entrySecret);
-    const target = new URL(galleryUrl);
-    if (payload.mode === "trial") {
-      target.pathname = "/trial.html";
-      target.search = "";
-    }
+    const target = new URL(payload.mode === "trial" ? TRIAL_GALLERY_URL : galleryUrl);
     target.searchParams.set("entry", entryToken);
 
     return Response.json({
