@@ -12,6 +12,8 @@ type EntryPayload = {
 type CampaignUser = {
   diagnosis_result: "coloring" | "meal" | "sweet" | null;
   participant_code: string | null;
+  coloring_participant_code: string | null;
+  coloring_pass_type: "advance" | "same_day" | null;
 };
 
 type Participant = {
@@ -36,6 +38,37 @@ const fetchOne = async <T>(response: Response, error: string) => {
   return rows[0] || null;
 };
 
+const fetchCampaignUser = async (
+  config: { url: string; key: string },
+  currentCampaign: string,
+  lineUserId: string,
+) => {
+  const queryBase = `/rest/v1/diagnosis_campaign_users?campaign_id=eq.${encodeURIComponent(currentCampaign)}&line_user_id=eq.${encodeURIComponent(lineUserId)}`;
+  const currentResponse = await supabaseAdminRequest(
+    config,
+    `${queryBase}&select=diagnosis_result,participant_code,coloring_participant_code,coloring_pass_type&limit=1`,
+    { method: "GET" },
+  );
+  if (currentResponse.ok) {
+    return fetchOne<CampaignUser>(currentResponse, "campaign_user_read_failed");
+  }
+
+  const legacy = await fetchOne<Pick<CampaignUser, "diagnosis_result" | "participant_code">>(
+    await supabaseAdminRequest(
+      config,
+      `${queryBase}&select=diagnosis_result,participant_code&limit=1`,
+      { method: "GET" },
+    ),
+    "campaign_user_read_failed",
+  );
+  if (!legacy) return null;
+  return {
+    ...legacy,
+    coloring_participant_code: legacy.diagnosis_result === "coloring" ? legacy.participant_code : null,
+    coloring_pass_type: null,
+  } satisfies CampaignUser;
+};
+
 export async function POST(request: Request) {
   const config = getSupabaseAdminConfig();
   const galleryUrl = process.env.COLORING_GALLERY_URL;
@@ -58,22 +91,18 @@ export async function POST(request: Request) {
     const lineUser = await verifyLineIdToken(payload.idToken);
     const currentCampaign = campaignId();
     const currentDay = japanDayKey();
-    const campaignUser = await fetchOne<CampaignUser>(
-      await supabaseAdminRequest(
-        config,
-        `/rest/v1/diagnosis_campaign_users?campaign_id=eq.${encodeURIComponent(currentCampaign)}&line_user_id=eq.${encodeURIComponent(lineUser.sub)}&select=diagnosis_result,participant_code&limit=1`,
-        { method: "GET" },
-      ),
-      "campaign_user_read_failed",
-    );
-    if (!campaignUser?.participant_code || campaignUser.diagnosis_result !== "coloring") {
+    const campaignUser = await fetchCampaignUser(config, currentCampaign, lineUser.sub);
+    const participantCode = payload.mode === "trial"
+      ? (campaignUser?.diagnosis_result === "coloring" ? campaignUser.participant_code : null)
+      : campaignUser?.coloring_participant_code;
+    if (!participantCode) {
       return Response.json({ error: "coloring_pass_not_found" }, { status: 403 });
     }
 
     const participant = await fetchOne<Participant>(
       await supabaseAdminRequest(
         config,
-        `/rest/v1/diagnosis_participants?participant_code=eq.${encodeURIComponent(campaignUser.participant_code)}&select=participant_code,pass_type,event_eligible,preview_used&limit=1`,
+        `/rest/v1/diagnosis_participants?participant_code=eq.${encodeURIComponent(participantCode)}&select=participant_code,pass_type,event_eligible,preview_used&limit=1`,
         { method: "GET" },
       ),
       "participant_read_failed",
