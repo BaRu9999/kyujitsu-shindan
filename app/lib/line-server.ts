@@ -49,14 +49,41 @@ const nativeCouponUrls: Partial<Record<ResultKey, string>> = {
   sweet: process.env.LINE_SWEET_COUPON_URL || "https://lin.ee/98j6aS5",
 };
 
+const companionKeywordMap: Record<string, string> = {
+  "子どもと": "子ども",
+  "家族と": "家族",
+  "友人と": "友人",
+  "ひとりで": "ひとり",
+};
+
+const resultKeywordMap: Record<ResultKey, string> = {
+  coloring: "親子",
+  meal: "御膳",
+  sweet: "甘味",
+};
+
+export const buildLstepSegmentKeyword = (result: ResultKey, companion?: string) => {
+  const companionKey = companion ? companionKeywordMap[companion] : "";
+  if (!companionKey) return "休日診断_特典獲得";
+  return `休日診断_${companionKey}_${resultKeywordMap[result]}`;
+};
+
+const buildLstepSegmentUrl = (result: ResultKey, companion?: string) => {
+  const officialAccountId = process.env.LINE_OFFICIAL_ACCOUNT_ID || "@958ctvuh";
+  const keyword = buildLstepSegmentKeyword(result, companion);
+  return `https://line.me/R/oaMessage/${encodeURIComponent(officialAccountId)}/?${encodeURIComponent(keyword)}`;
+};
+
 export const pushResultCoupon = async ({
   lineUserId,
   result,
   retryKey,
+  companion,
 }: {
   lineUserId: string;
   result: ResultKey;
   retryKey: string;
+  companion?: string;
 }) => {
   const accessToken = process.env.LINE_MESSAGING_CHANNEL_ACCESS_TOKEN;
   if (!accessToken) return { sent: false, error: "line_messaging_not_configured" };
@@ -67,6 +94,7 @@ export const pushResultCoupon = async ({
     "https://kyujitsu-shindan.vercel.app/?source=line";
   const nativeCouponUrl = nativeCouponUrls[result];
   const isNativeCoupon = Boolean(nativeCouponUrl);
+  const segmentUrl = buildLstepSegmentUrl(result, companion);
 
   const response = await fetch("https://api.line.me/v2/bot/message/push", {
     method: "POST",
@@ -135,15 +163,27 @@ export const pushResultCoupon = async ({
                 {
                   type: "button",
                   style: "link",
+                  action: { type: "uri", label: "診断結果をLINEに残す", uri: segmentUrl },
+                },
+                {
+                  type: "button",
+                  style: "link",
                   action: { type: "uri", label: "診断結果を確認", uri: appUrl },
                 },
               ]
-              : [{
-                type: "button",
-                style: "primary",
-                color: "#195D48",
-                action: { type: "uri", label: "参加PASSを確認", uri: appUrl },
-              }],
+              : [
+                {
+                  type: "button",
+                  style: "primary",
+                  color: "#195D48",
+                  action: { type: "uri", label: "参加PASSを確認", uri: appUrl },
+                },
+                {
+                  type: "button",
+                  style: "link",
+                  action: { type: "uri", label: "診断結果をLINEに残す", uri: segmentUrl },
+                },
+              ],
           },
         },
       }],
