@@ -10,6 +10,7 @@ const palette = [
 ] as const;
 
 const drawingTitles = ["朝顔と風鈴", "金魚と水紋", "和菓子とお茶"] as const;
+const linePassUrl = "https://line.me/R/oaMessage/%40958ctvuh/?%E4%BC%91%E6%97%A5%E8%A8%BA%E6%96%AD_%E7%89%B9%E5%85%B8%E7%8D%B2%E5%BE%97";
 
 type Entry = { entryId:string; participantCode:string; passType:string; coloring:string; expiresAt:number };
 type HistoryItem = { id:string; previous:string };
@@ -103,10 +104,12 @@ export default function TrialPage() {
 
     {!loading && !error && entry && complete && <section className={`${styles.card} ${styles.status}`}>
       <div className={styles.statusMark}>✓</div><p className={styles.kicker}>TRIAL COMPLETED</p><h1 className={styles.title}>お試しぬりえ完成！</h1>
-      <p className={styles.lead}>先行参加特典を獲得済みです。お試し作品は提出・公開・LINE特典送信の対象外です。</p>
+      <p className={styles.lead}>先行参加特典を獲得しました。下のボタンからLINEを開いて参加権を受け取ってください。</p>
       <div className={styles.completeArt}>{artwork}</div>
       <div className={styles.perk}><strong>本番参加で特別カラー解放</strong><br/>金茶・抹茶・桜・藍の4色が追加されます。</div>
-      <p className={styles.small}>本イベントでは店内の卓上QRから参加してください。</p>
+      <a className={styles.lineButton} href={linePassUrl}>LINEで参加権を受け取る</a>
+      <p className={styles.lineHelp}>LINEが開いたら「休日診断_特典獲得」を送信してください。送信すると本人のLステップに特典獲得タグが付きます。</p>
+      <p className={styles.small}>スマートフォンのLINEから操作してください。本イベントでは店内の卓上QRから参加できます。</p>
     </section>}
   </div></main>;
 }
