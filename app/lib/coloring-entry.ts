@@ -11,6 +11,7 @@ export type ColoringEntryClaims = {
   passType: "advance" | "same_day";
   palette: ColoringPalette;
   coloring: string;
+  companion?: string;
   issuedAt: number;
   expiresAt: number;
   entryId: string;
