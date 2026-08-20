@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { buildLstepSegmentKeyword, buildLstepSegmentUrl } from "@/app/lib/segmentation";
 import styles from "./trial.module.css";
 import Artwork from "./Artwork";
 
@@ -12,7 +11,16 @@ const palette = [
 
 const drawingTitles = ["朝顔と風鈴", "金魚と水紋", "和菓子とお茶"] as const;
 
-type Entry = { entryId:string; participantCode:string; passType:string; coloring:string; companion?:string; expiresAt:number };
+type Entry = {
+  entryId:string;
+  participantCode:string;
+  passType:string;
+  coloring:string;
+  companion?:string;
+  segmentKeyword:string;
+  segmentUrl:string;
+  expiresAt:number;
+};
 type HistoryItem = { id:string; previous:string };
 
 export default function TrialPage() {
@@ -56,8 +64,6 @@ export default function TrialPage() {
   }, [entry]);
 
   const title = drawingTitles[drawingIndex];
-  const segmentKeyword = buildLstepSegmentKeyword("coloring", entry?.companion);
-  const linePassUrl = buildLstepSegmentUrl("coloring", entry?.companion);
   const fillFor = (id:string) => fills[id] || "#ffffff";
   const paint = (id:string) => {
     const previous = fillFor(id);
@@ -109,8 +115,8 @@ export default function TrialPage() {
       <p className={styles.lead}>先行参加特典を獲得しました。下のボタンからLINEを開いて受け取りを完了してください。</p>
       <div className={styles.completeArt}>{artwork}</div>
       <div className={styles.perk}><strong>本番参加で特別カラー解放</strong><br/>金茶・抹茶・桜・藍の4色が追加されます。</div>
-      <a className={styles.lineButton} href={linePassUrl}>LINEで参加権を受け取る</a>
-      <p className={styles.lineHelp}>LINEが開いたら「{segmentKeyword}」をそのまま送信してください。送信後、参加権の受け取りが完了します。</p>
+      <a className={styles.lineButton} href={entry.segmentUrl}>LINEで参加権を受け取る</a>
+      <p className={styles.lineHelp}>LINEが開いたら「{entry.segmentKeyword}」をそのまま送信してください。送信後、参加権の受け取りが完了します。</p>
       <p className={styles.small}>スマートフォンのLINEから操作してください。本イベントでは店内の卓上QRから参加できます。</p>
     </section>}
   </div></main>;
