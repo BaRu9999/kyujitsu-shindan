@@ -58,6 +58,7 @@ export async function POST(request: Request) {
   try {
     const lineUser = await verifyLineIdToken(payload.idToken);
     const diagnosis = calculateDiagnosis(payload.answerIndexes);
+    const companion = diagnosis.answers[0]?.answer;
     const currentDay = japanDayKey();
     const currentCampaign = campaignId();
     const rawToken = token();
@@ -90,6 +91,7 @@ export async function POST(request: Request) {
         lineUserId: lineUser.sub,
         result: campaignUser.diagnosis_result,
         retryKey: campaignUser.id,
+        companion,
       });
       campaignUser = await callSupabaseRpc<CampaignUser>(config, "mark_diagnosis_coupon_delivery", {
         p_campaign_id: currentCampaign,
