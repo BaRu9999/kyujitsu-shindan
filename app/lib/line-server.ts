@@ -1,4 +1,5 @@
 import type { ResultKey } from "./diagnosis";
+import { buildLstepSegmentUrl } from "./segmentation";
 
 type VerifiedLineUser = {
   sub: string;
@@ -49,31 +50,6 @@ const nativeCouponUrls: Partial<Record<ResultKey, string>> = {
   sweet: process.env.LINE_SWEET_COUPON_URL || "https://lin.ee/98j6aS5",
 };
 
-const companionKeywordMap: Record<string, string> = {
-  "子どもと": "子ども",
-  "家族と": "家族",
-  "友人と": "友人",
-  "ひとりで": "ひとり",
-};
-
-const resultKeywordMap: Record<ResultKey, string> = {
-  coloring: "親子",
-  meal: "御膳",
-  sweet: "甘味",
-};
-
-export const buildLstepSegmentKeyword = (result: ResultKey, companion?: string) => {
-  const companionKey = companion ? companionKeywordMap[companion] : "";
-  if (!companionKey) return "休日診断_特典獲得";
-  return `休日診断_${companionKey}_${resultKeywordMap[result]}`;
-};
-
-const buildLstepSegmentUrl = (result: ResultKey, companion?: string) => {
-  const officialAccountId = process.env.LINE_OFFICIAL_ACCOUNT_ID || "@958ctvuh";
-  const keyword = buildLstepSegmentKeyword(result, companion);
-  return `https://line.me/R/oaMessage/${encodeURIComponent(officialAccountId)}/?${encodeURIComponent(keyword)}`;
-};
-
 export const pushResultCoupon = async ({
   lineUserId,
   result,
@@ -94,7 +70,11 @@ export const pushResultCoupon = async ({
     "https://kyujitsu-shindan.vercel.app/?source=line";
   const nativeCouponUrl = nativeCouponUrls[result];
   const isNativeCoupon = Boolean(nativeCouponUrl);
-  const segmentUrl = buildLstepSegmentUrl(result, companion);
+  const segmentUrl = buildLstepSegmentUrl(
+    result,
+    companion,
+    process.env.LINE_OFFICIAL_ACCOUNT_ID || "@958ctvuh",
+  );
 
   const response = await fetch("https://api.line.me/v2/bot/message/push", {
     method: "POST",
