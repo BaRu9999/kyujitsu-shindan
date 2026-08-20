@@ -162,6 +162,10 @@ export async function POST(request: Request) {
       coloring,
     }, entrySecret);
     const target = new URL(galleryUrl);
+    if (payload.mode === "trial") {
+      target.pathname = "/trial.html";
+      target.search = "";
+    }
     target.searchParams.set("entry", entryToken);
 
     return Response.json({
