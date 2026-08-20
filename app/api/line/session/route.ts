@@ -10,12 +10,19 @@ type SessionPayload = {
   source?: string;
 };
 
+type StoredAnswer = {
+  question?: string;
+  answer?: string;
+  answerIndex?: number;
+};
+
 type CampaignUser = {
   id: string;
   campaign_id: string;
   line_user_id: string;
   diagnosis_completed_at: string | null;
   diagnosis_result: "coloring" | "meal" | "sweet" | null;
+  answers?: StoredAnswer[];
   participant_code: string | null;
   coupon_code: string | null;
   coupon_send_status: "not_sent" | "sent" | "failed";
@@ -100,6 +107,7 @@ export async function POST(request: Request) {
         lineUserId: lineUser.sub,
         result: campaignUser.diagnosis_result,
         retryKey: campaignUser.id,
+        companion: campaignUser.answers?.[0]?.answer,
       });
       campaignUser = await callSupabaseRpc<CampaignUser>(config, "mark_diagnosis_coupon_delivery", {
         p_campaign_id: currentCampaign,
