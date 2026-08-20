@@ -44,11 +44,11 @@ const questions: Question[] = [
   },
   {
     eyebrow: "いまの気分をひとつ",
-    title: "今日、いちばん楽しみたいのは？",
+    title: "今日、いちばん大切にしたいことは？",
     answers: [
-      { label: "一緒に遊ぶ時間", note: "小さな思い出をつくりたい", score: { coloring: 3, meal: 0, sweet: 0 } },
-      { label: "しっかりした食事", note: "満足できる休日にしたい", score: { coloring: 0, meal: 3, sweet: 0 } },
-      { label: "甘味でひと休み", note: "ほっと気持ちをゆるめたい", score: { coloring: 0, meal: 0, sweet: 3 } },
+      { label: "一緒に楽しむ", note: "小さな思い出をつくりたい", score: { coloring: 3, meal: 0, sweet: 0 } },
+      { label: "しっかり満たす", note: "食事で休日の満足感を味わいたい", score: { coloring: 0, meal: 3, sweet: 0 } },
+      { label: "ほっと休む", note: "甘味とお茶で気持ちをゆるめたい", score: { coloring: 0, meal: 0, sweet: 3 } },
     ],
   },
   {
@@ -64,9 +64,9 @@ const questions: Question[] = [
     eyebrow: "最後は、直感で",
     title: "気になる言葉を選んでください",
     answers: [
-      { label: "季節のぬりえ", note: "今日だけの一枚", score: { coloring: 3, meal: 0, sweet: 0 } },
-      { label: "ごほうび御膳", note: "食事とお茶で満たされる", score: { coloring: 0, meal: 3, sweet: 0 } },
-      { label: "もちもちわらび餅", note: "甘味とお茶でひと息", score: { coloring: 0, meal: 0, sweet: 3 } },
+      { label: "つくる", note: "手を動かして楽しむ", score: { coloring: 3, meal: 0, sweet: 0 } },
+      { label: "満たす", note: "食事をゆっくり味わう", score: { coloring: 0, meal: 3, sweet: 0 } },
+      { label: "ほどく", note: "甘味とお茶でひと息", score: { coloring: 0, meal: 0, sweet: 3 } },
     ],
   },
 ];
@@ -80,16 +80,16 @@ const results = {
     mark: "ぬ",
   },
   meal: {
-    kicker: "ごほうび御膳",
-    title: "御膳とお茶の満足時間",
-    description: "しっかり食べて、食後はお茶でひと息。休日をゆっくり味わいたいあなたに。",
+    kicker: "ごほうび御膳タイプ",
+    title: "御膳と和紅茶の満足時間",
+    description: "しっかり食べて、和紅茶でひと息。食事とお茶で休日をゆっくり味わいたいあなたに。",
     color: "var(--vermilion)",
     mark: "膳",
   },
   sweet: {
-    kicker: "ほっと甘味",
-    title: "わらび餅とお茶の休息時間",
-    description: "もちもちの甘味とドリンクで、気持ちをほどく休日。おしゃべりにも、ひとり時間にも。",
+    kicker: "甘味ひとやすみタイプ",
+    title: "二色わらび餅と和紅茶の休息時間",
+    description: "二色のわらび餅と和紅茶で、気持ちをほどく休日。おしゃべりにも、ひとり時間にも。",
     color: "var(--mustard)",
     mark: "甘",
   },
@@ -388,19 +388,19 @@ export default function Home() {
 
           {saved.result === "meal" && (
             <div className="offer-box price-offer">
-              <span>本日のおすすめセット</span>
-              <strong>御膳＋対象ドリンク</strong>
-              <div className="price-row"><del>通常 2,497円</del><b>2,377円</b></div>
-              <p>120円お得。ご注文時にこの画面をスタッフへお見せください。</p>
+              <span>診断結果限定セット特典</span>
+              <strong>選べる御膳＋和紅茶</strong>
+              <div className="price-row"><del>和紅茶 通常495円</del><b>セット時375円</b></div>
+              <p>お好きな御膳と和紅茶を一緒にご注文で、合計から120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
             </div>
           )}
 
           {saved.result === "sweet" && (
             <div className="offer-box price-offer">
-              <span>本日のおすすめセット</span>
-              <strong>わらび餅＋対象ドリンク</strong>
+              <span>診断結果限定セット特典</span>
+              <strong>二色わらび餅＋和紅茶</strong>
               <div className="price-row"><del>通常 1,243円</del><b>1,123円</b></div>
-              <p>120円お得。ご注文時にこの画面をスタッフへお見せください。</p>
+              <p>診断した方だけの120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
             </div>
           )}
 

@@ -41,7 +41,11 @@ function syncHolidayDiagnosisLogs() {
     'ぬりえ参加権', '先行お試し済み', '作品状態', '初回登録日時',
     '最終更新日時', '卓上QR読込数', 'ぬりえ開始数', '作品送信数'
   ];
-  const resultLabels = { coloring: 'ぬりえ参加', meal: '御膳＋ドリンク', sweet: 'わらび餅＋ドリンク' };
+  const resultLabels = {
+    coloring: 'ぬりえ参加',
+    meal: '選べる御膳＋和紅茶',
+    sweet: '二色わらび餅＋和紅茶'
+  };
   const passLabels = { advance: '先行参加', same_day: '当日参加' };
   const statusLabels = {
     not_submitted: '未送信', submitted: '確認待ち', approved: '承認', rejected: '非承認'
