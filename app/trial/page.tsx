@@ -52,6 +52,7 @@ export default function TrialPage() {
     const index = drawingTitles.findIndex((name) => name === entry.coloring);
     return index >= 0 ? index : 0;
   }, [entry]);
+
   const title = drawingTitles[drawingIndex];
   const fillFor = (id:string) => fills[id] || "#ffffff";
   const paint = (id:string) => {
@@ -68,94 +69,130 @@ export default function TrialPage() {
   };
   const reset = () => { setFills({}); setHistory([]); };
 
+  const common = {
+    stroke: "#252925",
+    strokeWidth: 6,
+    strokeLinejoin: "round" as const,
+    strokeLinecap: "round" as const,
+  };
+
   const artwork = (
     <svg viewBox="0 0 700 900" aria-label={`${title}のぬりえ`}>
       <rect width="700" height="900" fill="#fff" />
 
-      {drawingIndex === 0 && <g stroke="#242723" strokeWidth="8" strokeLinejoin="round" strokeLinecap="round">
-        <path d="M116 192C124 126 202 92 259 132C300 162 296 224 260 256C221 291 153 280 124 236C114 221 111 206 116 192Z" fill={fillFor("a1")} onClick={()=>paint("a1")} />
-        <path d="M170 126C182 162 190 200 190 255M120 190C159 190 207 188 260 176M138 240C175 218 216 192 250 148" fill="none" />
-        <circle cx="192" cy="192" r="24" fill={fillFor("a2")} onClick={()=>paint("a2")} />
+      {drawingIndex === 0 && <g {...common}>
+        {/* 朝顔 1 */}
+        <path d="M132 214C95 169 115 109 163 94C196 83 221 101 237 122C255 98 286 86 317 101C365 124 369 184 332 221C303 250 270 265 235 292C203 262 164 250 132 214Z" fill={fillFor("a1")} onClick={()=>paint("a1")} />
+        <circle cx="236" cy="177" r="35" fill={fillFor("a2")} onClick={()=>paint("a2")} />
+        <path d="M236 142L236 107M205 152L181 126M266 152L292 127M204 191L171 203M268 191L301 205" fill="none" />
 
-        <path d="M310 288C319 226 389 194 443 224C489 250 493 311 460 348C421 391 349 381 319 337C309 322 305 304 310 288Z" fill={fillFor("a3")} onClick={()=>paint("a3")} />
-        <path d="M356 222C370 258 378 300 378 356M313 291C350 287 401 278 460 263M326 339C362 316 410 278 447 241" fill="none" />
-        <circle cx="378" cy="289" r="22" fill={fillFor("a4")} onClick={()=>paint("a4")} />
+        {/* 朝顔 2 */}
+        <path d="M294 360C269 322 286 277 326 260C352 249 378 261 392 279C409 260 436 250 462 263C504 284 510 331 480 365C454 394 422 407 391 432C363 409 320 398 294 360Z" fill={fillFor("a3")} onClick={()=>paint("a3")} />
+        <circle cx="391" cy="328" r="27" fill={fillFor("a4")} onClick={()=>paint("a4")} />
+        <path d="M391 301V274M368 309L349 289M414 309L434 290M367 343L342 351M416 343L442 352" fill="none" />
 
-        <path d="M100 390C156 344 224 359 248 420C192 438 146 432 100 390Z" fill={fillFor("a5")} onClick={()=>paint("a5")} />
-        <path d="M246 442C308 397 374 420 391 480C331 491 285 480 246 442Z" fill={fillFor("a6")} onClick={()=>paint("a6")} />
-        <path d="M192 258C218 335 229 430 208 548M378 356C351 430 328 500 326 590" fill="none" />
+        {/* 葉 */}
+        <path d="M91 362C143 312 214 327 234 386C184 411 129 405 91 362Z" fill={fillFor("a5")} onClick={()=>paint("a5")} />
+        <path d="M182 471C232 422 299 438 317 495C268 517 220 510 182 471Z" fill={fillFor("a6")} onClick={()=>paint("a6")} />
+        <path d="M111 362C150 360 191 371 222 389M201 471C239 473 279 485 306 500" fill="none" />
+        <path d="M236 292C251 360 250 437 225 531M391 432C372 479 357 526 354 584" fill="none" />
 
-        <path d="M510 96V230" fill="none" />
-        <path d="M446 238Q510 194 574 238L558 402Q510 448 462 402Z" fill={fillFor("a7")} onClick={()=>paint("a7")} />
-        <path d="M469 258Q510 234 551 258M478 302Q510 285 542 302" fill="none" />
-        <path d="M486 402H534L526 472H494Z" fill={fillFor("a8")} onClick={()=>paint("a8")} />
-        <path d="M510 472V560" fill="none" />
-        <path d="M452 560Q510 520 568 560Q510 632 452 560Z" fill={fillFor("a9")} onClick={()=>paint("a9")} />
+        {/* 風鈴 */}
+        <path d="M530 84V207" fill="none" />
+        <path d="M458 232C470 184 494 162 530 162C567 162 591 184 603 232Z" fill={fillFor("a7")} onClick={()=>paint("a7")} />
+        <path d="M472 232Q530 266 589 232L575 386Q530 425 485 386Z" fill={fillFor("a8")} onClick={()=>paint("a8")} />
+        <circle cx="530" cy="326" r="20" fill={fillFor("a9")} onClick={()=>paint("a9")} />
+        <path d="M530 346V442" fill="none" />
+        <path d="M487 442Q530 414 574 442L558 574Q530 596 503 574Z" fill={fillFor("a10")} onClick={()=>paint("a10")} />
+        <path d="M503 474Q530 456 558 474M508 513Q530 500 553 513" fill="none" />
 
-        <path d="M94 680Q350 622 606 680" fill="none" />
-        <path d="M126 695Q210 648 294 695L280 785Q210 824 140 785Z" fill={fillFor("a10")} onClick={()=>paint("a10")} />
-        <path d="M151 695Q210 672 269 695Q210 730 151 695Z" fill={fillFor("a11")} onClick={()=>paint("a11")} />
-        <path d="M420 682C452 652 492 658 510 692C482 714 444 711 420 682Z" fill={fillFor("a12")} onClick={()=>paint("a12")} />
+        {/* 夏の小物 */}
+        <path d="M102 674Q184 622 267 674L253 782Q184 820 116 782Z" fill={fillFor("a11")} onClick={()=>paint("a11")} />
+        <ellipse cx="184" cy="674" rx="82" ry="28" fill={fillFor("a12")} onClick={()=>paint("a12")} />
+        <path d="M439 682C475 642 531 648 557 691C524 721 474 717 439 682Z" fill={fillFor("a13")} onClick={()=>paint("a13")} />
+        <path d="M469 685Q504 668 542 689" fill="none" />
+        <circle cx="606" cy="650" r="14" fill="none" />
+        <circle cx="632" cy="617" r="8" fill="none" />
       </g>}
 
-      {drawingIndex === 1 && <g stroke="#242723" strokeWidth="8" strokeLinejoin="round" strokeLinecap="round">
-        <ellipse cx="260" cy="305" rx="132" ry="82" fill={fillFor("b1")} onClick={()=>paint("b1")} />
-        <path d="M378 296Q512 190 570 294Q526 392 382 338Z" fill={fillFor("b2")} onClick={()=>paint("b2")} />
-        <path d="M238 225Q292 150 350 229Q298 258 238 225Z" fill={fillFor("b3")} onClick={()=>paint("b3")} />
-        <path d="M238 385Q297 458 352 382Q298 352 238 385Z" fill={fillFor("b4")} onClick={()=>paint("b4")} />
-        <circle cx="188" cy="286" r="11" fill="#242723" stroke="none" />
-        <path d="M154 326Q187 347 218 327M318 258Q338 303 321 349" fill="none" />
+      {drawingIndex === 1 && <g {...common}>
+        {/* 大きな金魚 */}
+        <path d="M120 298C148 221 251 190 332 226C373 245 400 280 407 319C394 362 360 396 313 412C230 441 145 400 120 333C116 321 116 309 120 298Z" fill={fillFor("b1")} onClick={()=>paint("b1")} />
+        <path d="M397 304C464 241 539 208 604 237C588 289 555 323 516 344C560 361 589 398 594 450C523 467 459 435 399 376C421 352 425 327 397 304Z" fill={fillFor("b2")} onClick={()=>paint("b2")} />
+        <path d="M232 221C256 174 302 154 349 176C333 218 305 242 268 253Z" fill={fillFor("b3")} onClick={()=>paint("b3")} />
+        <path d="M235 413C265 455 312 467 353 443C334 407 305 388 270 380Z" fill={fillFor("b4")} onClick={()=>paint("b4")} />
+        <circle cx="171" cy="292" r="11" fill="#252925" stroke="none" />
+        <path d="M145 329Q174 347 202 329" fill="none" />
+        <path d="M247 254Q276 291 247 329M294 242Q322 280 296 321M342 251Q366 286 344 316" fill="none" />
+        <path d="M255 345Q282 372 309 346M310 334Q336 358 363 337" fill="none" />
 
-        <ellipse cx="438" cy="548" rx="92" ry="58" fill={fillFor("b5")} onClick={()=>paint("b5")} />
-        <path d="M520 542Q603 478 628 548Q593 616 522 577Z" fill={fillFor("b6")} onClick={()=>paint("b6")} />
-        <path d="M420 492Q460 443 499 495Q460 518 420 492Z" fill={fillFor("b7")} onClick={()=>paint("b7")} />
-        <path d="M420 602Q460 648 501 599Q460 578 420 602Z" fill={fillFor("b8")} onClick={()=>paint("b8")} />
-        <circle cx="394" cy="535" r="8" fill="#242723" stroke="none" />
+        {/* 小さな金魚 */}
+        <path d="M291 553C313 497 384 474 439 498C473 513 493 541 497 571C488 604 463 628 429 640C370 661 311 634 291 590C285 577 286 565 291 553Z" fill={fillFor("b5")} onClick={()=>paint("b5")} />
+        <path d="M490 551C535 512 585 496 625 516C615 549 594 570 569 583C595 595 612 617 616 649C568 660 527 639 491 607C506 588 508 569 490 551Z" fill={fillFor("b6")} onClick={()=>paint("b6")} />
+        <path d="M361 497C379 464 410 452 441 468C429 495 411 510 386 519Z" fill={fillFor("b7")} onClick={()=>paint("b7")} />
+        <circle cx="326" cy="550" r="8" fill="#252925" stroke="none" />
+        <path d="M365 525Q388 551 366 576M407 516Q428 543 409 568" fill="none" />
 
-        <circle cx="104" cy="145" r="18" fill="none" />
-        <circle cx="150" cy="118" r="10" fill="none" />
-        <circle cx="576" cy="156" r="16" fill="none" />
-        <circle cx="610" cy="196" r="9" fill="none" />
-        <ellipse cx="330" cy="724" rx="250" ry="56" fill="none" />
-        <ellipse cx="330" cy="724" rx="172" ry="31" fill="none" />
+        {/* 水草 */}
+        <path d="M109 746C77 704 86 660 126 630C154 673 147 714 109 746Z" fill={fillFor("b8")} onClick={()=>paint("b8")} />
+        <path d="M147 772C120 724 137 682 181 659C202 706 189 744 147 772Z" fill={fillFor("b9")} onClick={()=>paint("b9")} />
+        <path d="M572 765C544 716 558 671 604 645C630 692 619 735 572 765Z" fill={fillFor("b10")} onClick={()=>paint("b10")} />
+        <path d="M112 735V824M151 760V824M575 754V824" fill="none" />
 
-        <path d="M104 690Q139 612 176 686Q143 722 104 690Z" fill={fillFor("b9")} onClick={()=>paint("b9")} />
-        <path d="M134 628Q169 560 202 629Q169 666 134 628Z" fill={fillFor("b10")} onClick={()=>paint("b10")} />
-        <path d="M565 696Q598 624 630 694Q600 730 565 696Z" fill={fillFor("b11")} onClick={()=>paint("b11")} />
-        <path d="M585 631Q616 568 645 632Q616 664 585 631Z" fill={fillFor("b12")} onClick={()=>paint("b12")} />
-        <path d="M151 620V790M610 620V790" fill="none" />
+        {/* 水紋・泡 */}
+        <ellipse cx="209" cy="703" rx="112" ry="31" fill="none" />
+        <ellipse cx="209" cy="703" rx="66" ry="17" fill="none" />
+        <ellipse cx="462" cy="761" rx="106" ry="28" fill="none" />
+        <ellipse cx="462" cy="761" rx="61" ry="14" fill="none" />
+        <circle cx="97" cy="132" r="17" fill="none" />
+        <circle cx="139" cy="170" r="9" fill="none" />
+        <circle cx="548" cy="124" r="14" fill="none" />
+        <circle cx="592" cy="162" r="8" fill="none" />
       </g>}
 
-      {drawingIndex === 2 && <g stroke="#242723" strokeWidth="8" strokeLinejoin="round" strokeLinecap="round">
-        <ellipse cx="220" cy="358" rx="108" ry="28" fill="none" />
-        <path d="M126 360Q136 505 220 518Q304 505 314 360Z" fill={fillFor("c1")} onClick={()=>paint("c1")} />
-        <ellipse cx="220" cy="360" rx="94" ry="24" fill={fillFor("c2")} onClick={()=>paint("c2")} />
-        <path d="M166 300Q220 248 274 300M184 272Q220 224 256 272" fill="none" />
+      {drawingIndex === 2 && <g {...common}>
+        {/* 湯のみ */}
+        <ellipse cx="190" cy="258" rx="105" ry="31" fill={fillFor("c1")} onClick={()=>paint("c1")} />
+        <path d="M87 261C94 368 122 434 190 448C258 434 286 368 293 261Z" fill={fillFor("c2")} onClick={()=>paint("c2")} />
+        <ellipse cx="190" cy="258" rx="86" ry="21" fill={fillFor("c3")} onClick={()=>paint("c3")} />
+        <path d="M143 183C122 157 143 133 163 111M193 181C174 153 197 126 215 102M240 183C222 155 245 132 262 112" fill="none" />
+        <path d="M129 346Q190 378 251 346" fill="none" />
 
-        <ellipse cx="445" cy="580" rx="162" ry="48" fill="none" />
-        <path d="M330 545Q375 466 420 545Q375 600 330 545Z" fill={fillFor("c3")} onClick={()=>paint("c3")} />
-        <path d="M410 536Q456 452 502 536Q456 598 410 536Z" fill={fillFor("c4")} onClick={()=>paint("c4")} />
-        <path d="M492 548Q538 476 580 548Q538 602 492 548Z" fill={fillFor("c5")} onClick={()=>paint("c5")} />
-        <circle cx="375" cy="545" r="14" fill={fillFor("c6")} onClick={()=>paint("c6")} />
-        <circle cx="456" cy="536" r="14" fill={fillFor("c7")} onClick={()=>paint("c7")} />
-        <circle cx="538" cy="548" r="14" fill={fillFor("c8")} onClick={()=>paint("c8")} />
+        {/* 茶葉 */}
+        <path d="M449 143C489 104 539 112 555 155C516 179 476 176 449 143Z" fill={fillFor("c4")} onClick={()=>paint("c4")} />
+        <path d="M518 199C554 160 605 169 620 210C582 235 545 229 518 199Z" fill={fillFor("c5")} onClick={()=>paint("c5")} />
+        <path d="M445 145Q523 199 590 262" fill="none" />
+        <path d="M516 200Q558 215 593 260" fill="none" />
 
-        <path d="M105 672H584" fill="none" />
-        <path d="M124 689Q350 632 575 689L548 772Q350 830 151 772Z" fill={fillFor("c9")} onClick={()=>paint("c9")} />
-        <path d="M153 690Q350 656 548 690Q350 744 153 690Z" fill={fillFor("c10")} onClick={()=>paint("c10")} />
+        {/* 和菓子の皿 */}
+        <ellipse cx="420" cy="514" rx="198" ry="62" fill={fillFor("c6")} onClick={()=>paint("c6")} />
+        <ellipse cx="420" cy="504" rx="174" ry="43" fill="#fff" />
 
-        <circle cx="248" cy="698" r="46" fill={fillFor("c11")} onClick={()=>paint("c11")} />
-        <path d="M202 697Q248 640 294 697Q248 756 202 697Z" fill={fillFor("c12")} onClick={()=>paint("c12")} />
-        <path d="M248 652V744M204 697H292" fill="none" />
+        {/* 練り切り・花 */}
+        <path d="M317 500C291 474 299 438 329 427C342 401 379 397 398 421C429 416 451 444 443 474C463 498 449 532 419 538C403 563 365 565 345 542C316 545 296 526 317 500Z" fill={fillFor("c7")} onClick={()=>paint("c7")} />
+        <circle cx="380" cy="484" r="22" fill={fillFor("c8")} onClick={()=>paint("c8")} />
+        <path d="M380 462V430M361 472L338 448M399 472L423 448M360 496L332 505M400 496L428 505M369 505L355 532M391 505L406 532" fill="none" />
 
-        <circle cx="376" cy="704" r="37" fill={fillFor("c13")} onClick={()=>paint("c13")} />
-        <circle cx="456" cy="704" r="37" fill={fillFor("c14")} onClick={()=>paint("c14")} />
-        <circle cx="536" cy="704" r="37" fill={fillFor("c15")} onClick={()=>paint("c15")} />
-        <path d="M344 734L566 674" fill="none" />
+        {/* 桜餅 */}
+        <path d="M457 474C478 431 540 421 570 456C590 480 580 512 550 530C515 551 471 535 457 502C453 492 453 483 457 474Z" fill={fillFor("c9")} onClick={()=>paint("c9")} />
+        <path d="M462 500C496 476 536 473 570 490C544 523 497 535 462 500Z" fill={fillFor("c10")} onClick={()=>paint("c10")} />
+        <path d="M486 488Q520 472 552 487" fill="none" />
 
-        <path d="M470 220Q521 164 570 220Q521 274 470 220Z" fill={fillFor("c16")} onClick={()=>paint("c16")} />
-        <path d="M520 219Q565 166 610 226Q562 272 520 219Z" fill={fillFor("c17")} onClick={()=>paint("c17")} />
-        <path d="M520 218L480 300M565 220L548 305" fill="none" />
+        {/* 三色団子 */}
+        <path d="M148 686L454 646" fill="none" />
+        <circle cx="213" cy="678" r="47" fill={fillFor("c11")} onClick={()=>paint("c11")} />
+        <circle cx="306" cy="666" r="47" fill={fillFor("c12")} onClick={()=>paint("c12")} />
+        <circle cx="399" cy="654" r="47" fill={fillFor("c13")} onClick={()=>paint("c13")} />
+
+        {/* もなか */}
+        <path d="M470 691C503 652 568 652 601 691C570 730 503 731 470 691Z" fill={fillFor("c14")} onClick={()=>paint("c14")} />
+        <path d="M488 691Q536 667 584 691Q536 716 488 691Z" fill={fillFor("c15")} onClick={()=>paint("c15")} />
+
+        {/* 敷き紙 */}
+        <path d="M92 805Q350 762 609 805" fill="none" />
+        <path d="M122 816Q350 785 580 816" fill="none" />
+        <circle cx="606" cy="353" r="13" fill="none" />
+        <circle cx="634" cy="320" r="7" fill="none" />
       </g>}
     </svg>
   );
