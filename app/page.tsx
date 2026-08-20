@@ -21,6 +21,16 @@ type SavedDiagnosis = {
   couponSent?: boolean;
 };
 
+type ColoringPass = {
+  participantCode: string;
+  token: string;
+  passType: PassType;
+  source: string;
+  diagnosedOn: string;
+  previewUsed: boolean;
+  created?: boolean;
+};
+
 const STORAGE_KEY = "kyujitsu-diagnosis-v2";
 const EVENT_START = "2026-08-22";
 
@@ -111,6 +121,7 @@ export default function Home() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [scores, setScores] = useState<Record<ResultKey, number>>({ coloring: 0, meal: 0, sweet: 0 });
   const [saved, setSaved] = useState<SavedDiagnosis | null>(null);
+  const [coloringPass, setColoringPass] = useState<ColoringPass | null>(null);
   const [source, setSource] = useState("direct");
   const [selectedColoring, setSelectedColoring] = useState("秋の茶寮");
   const [ready, setReady] = useState(false);
@@ -177,11 +188,13 @@ export default function Home() {
           if (cancelled) return;
           setLineIdToken(idToken);
           setLineStatus("ready");
+          const tablePass = data.coloringPass ? data.coloringPass as ColoringPass : null;
+          setColoringPass(tablePass);
           if (data.completed && data.diagnosis) {
             const existing = normalizeSavedDiagnosis(data.diagnosis as SavedDiagnosis);
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
             setSaved(existing);
-            if (nextSource === "table" && existing.result === "coloring" && effectiveDay >= EVENT_START) {
+            if (nextSource === "table" && effectiveDay >= EVENT_START && (tablePass || existing.result === "coloring")) {
               setView("coloring-ready");
             } else if (effectiveDay < EVENT_START && existing.result === "coloring" && !existing.previewUsed) {
               setView("preview-gallery");
@@ -190,7 +203,7 @@ export default function Home() {
             }
           } else {
             setSaved(null);
-            setView("intro");
+            setView(nextSource === "table" && effectiveDay >= EVENT_START && tablePass ? "coloring-ready" : "intro");
           }
         } catch (error) {
           if (cancelled) return;
@@ -220,6 +233,14 @@ export default function Home() {
   const currentQuestion = questions[questionIndex];
   const progress = ((questionIndex + 1) / questions.length) * 100;
   const isPreviewPeriod = currentDay < EVENT_START;
+  const activeColoringPass: ColoringPass | null = coloringPass || (saved?.result === "coloring" ? {
+    participantCode: formatPassNumber(saved),
+    token: saved.token,
+    passType: saved.passType || (saved.diagnosedOn < EVENT_START ? "advance" : "same_day"),
+    source: saved.source,
+    diagnosedOn: saved.diagnosedOn,
+    previewUsed: saved.previewUsed,
+  } : null);
 
   const sourceLabel = useMemo(() => {
     if (source === "line") return "LINEから参加";
@@ -316,11 +337,16 @@ export default function Home() {
   };
 
   const beginColoring = async (trial: boolean) => {
-    if (!saved || ready) return;
+    if (ready || (trial && !saved)) return;
     setReady(true);
     setColoringEntryError("");
 
     if (demo) {
+      if (!saved) {
+        setColoringEntryError("デモ用の参加情報がありません。");
+        setReady(false);
+        return;
+      }
       const updated = trial && !saved.previewUsed ? { ...saved, previewUsed: true } : saved;
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       setSaved(updated);
@@ -358,7 +384,7 @@ export default function Home() {
         throw new Error(messages[data.error] || "ぬりえギャラリーを開けませんでした。");
       }
 
-      if (trial) {
+      if (trial && saved) {
         const updated = { ...saved, previewUsed: true };
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         setSaved(updated);
@@ -428,9 +454,9 @@ export default function Home() {
     );
   }
 
-  if ((view === "coloring-ready" || view === "preview-gallery") && saved) {
+  if ((view === "coloring-ready" || view === "preview-gallery") && activeColoringPass) {
     const isTrial = view === "preview-gallery";
-    const isAdvance = saved.passType === "advance";
+    const isAdvance = activeColoringPass.passType === "advance";
     return (
       <main className="paper-shell">
         {renderHeader()}
@@ -438,7 +464,7 @@ export default function Home() {
           <div className={`pass-badge ${isAdvance ? "advance" : "same-day"}`}>
             <small>{isAdvance ? "事前登録済み" : "本日登録"}</small>
             <strong>{isAdvance ? "先行参加PASS" : "当日参加PASS"}</strong>
-            <span>{formatPassNumber(saved)}</span>
+            <span>{activeColoringPass.participantCode}</span>
           </div>
           <div className="permission-row">
             <span className="valid-dot" /> {isTrial ? "先行お試し権を確認しました" : "本参加権を確認しました"}
@@ -483,7 +509,7 @@ export default function Home() {
             </div>
           )}
           {coloringEntryError && <p className="form-error" role="alert">{coloringEntryError}</p>}
-          <p className="token-line">本参加番号 <b>{formatPassNumber(saved)}</b></p>
+          <p className="token-line">本参加番号 <b>{activeColoringPass.participantCode}</b></p>
         </section>
         <Decorations />
       </main>
