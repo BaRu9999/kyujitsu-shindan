@@ -20,9 +20,10 @@ VercelのProject Settings → Environment Variablesへ登録します。
 ```text
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_SECRET_KEY=sb_secret_...
+SHEETS_SYNC_TOKEN=64文字以上のランダムな値
 ```
 
-`SUPABASE_SECRET_KEY` はサーバー専用です。ソースコードやブラウザ側へ記載しないでください。
+`SUPABASE_SECRET_KEY` はVercelサーバー専用です。ソースコード、ブラウザ、Apps Scriptへ記載しないでください。
 
 ## QRのURL
 
@@ -34,7 +35,7 @@ LINE：https://公開URL/?source=line
 
 ## Googleスプレッドシート
 
-`docs/google-sheets-sync.gs` を対象スプレッドシートのApps Scriptへ追加し、スクリプトプロパティに `SUPABASE_URL` と `SUPABASE_SECRET_KEY` を登録します。`installHolidayDiagnosisSync` を1回実行すると、5分ごとに「参加ログ」へ反映されます。
+`docs/google-sheets-sync.gs` を対象スプレッドシートのApps Scriptへ追加し、VercelとApps Scriptの両方に同じ `SHEETS_SYNC_TOKEN` を登録します。`SUPABASE_SECRET_KEY` はApps Scriptへ登録しません。`installHolidayDiagnosisSync` を1回実行すると、5分ごとに「参加ログ」へ反映されます。
 
 ## ローカル確認
 

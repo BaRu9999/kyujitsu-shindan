@@ -2,35 +2,35 @@
  * 休日診断のSupabaseデータを、同じスプレッドシート内の
  * 「参加ログ」シートへ自動反映します。
  *
- * スクリプトプロパティに次の2項目を登録してください。
- * SUPABASE_URL
- * SUPABASE_SECRET_KEY
- * 旧形式の場合は SUPABASE_SERVICE_ROLE_KEY でも動作します。
+ * スクリプトプロパティに次の項目を登録してください。
+ * SHEETS_SYNC_TOKEN
+ *
+ * 必要に応じて同期先を変更する場合だけ、次も登録します。
+ * SHEETS_SYNC_ENDPOINT
  */
 function syncHolidayDiagnosisLogs() {
   const props = PropertiesService.getScriptProperties();
-  const supabaseUrl = String(props.getProperty('SUPABASE_URL') || '').replace(/\/$/, '');
-  const serviceRoleKey = props.getProperty('SUPABASE_SECRET_KEY') ||
-    props.getProperty('SUPABASE_SERVICE_ROLE_KEY');
+  const endpoint = props.getProperty('SHEETS_SYNC_ENDPOINT') ||
+    'https://kyujitsu-shindan.vercel.app/api/sheets-export';
+  const syncToken = props.getProperty('SHEETS_SYNC_TOKEN');
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Supabaseの接続情報が未設定です。');
+  if (!syncToken) {
+    throw new Error('SHEETS_SYNC_TOKENが未設定です。');
   }
 
   const response = UrlFetchApp.fetch(
-    supabaseUrl + '/rest/v1/sheet_participation_export?select=*&order=created_at.desc&limit=5000',
+    endpoint,
     {
       method: 'get',
       headers: {
-        apikey: serviceRoleKey,
-        Authorization: 'Bearer ' + serviceRoleKey
+        'X-Sync-Token': syncToken
       },
       muteHttpExceptions: true
     }
   );
 
   if (response.getResponseCode() !== 200) {
-    throw new Error('Supabase取得エラー: ' + response.getContentText());
+    throw new Error('同期API取得エラー: ' + response.getContentText());
   }
 
   const records = JSON.parse(response.getContentText());
