@@ -23,6 +23,7 @@ export async function POST(request: Request) {
         passType: claims.passType,
         palette: claims.palette,
         coloring: claims.coloring,
+        companion: claims.companion,
         expiresAt: claims.expiresAt,
       },
     });
