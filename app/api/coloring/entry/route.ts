@@ -9,8 +9,15 @@ type EntryPayload = {
   coloring?: string;
 };
 
+type StoredAnswer = {
+  question?: string;
+  answer?: string;
+  answerIndex?: number;
+};
+
 type CampaignUser = {
   diagnosis_result: "coloring" | "meal" | "sweet" | null;
+  answers?: StoredAnswer[];
   participant_code: string | null;
   coloring_participant_code: string | null;
   coloring_pass_type: "advance" | "same_day" | null;
@@ -46,17 +53,17 @@ const fetchCampaignUser = async (
   const queryBase = `/rest/v1/diagnosis_campaign_users?campaign_id=eq.${encodeURIComponent(currentCampaign)}&line_user_id=eq.${encodeURIComponent(lineUserId)}`;
   const currentResponse = await supabaseAdminRequest(
     config,
-    `${queryBase}&select=diagnosis_result,participant_code,coloring_participant_code,coloring_pass_type&limit=1`,
+    `${queryBase}&select=diagnosis_result,answers,participant_code,coloring_participant_code,coloring_pass_type&limit=1`,
     { method: "GET" },
   );
   if (currentResponse.ok) {
     return fetchOne<CampaignUser>(currentResponse, "campaign_user_read_failed");
   }
 
-  const legacy = await fetchOne<Pick<CampaignUser, "diagnosis_result" | "participant_code">>(
+  const legacy = await fetchOne<Pick<CampaignUser, "diagnosis_result" | "answers" | "participant_code">>(
     await supabaseAdminRequest(
       config,
-      `${queryBase}&select=diagnosis_result,participant_code&limit=1`,
+      `${queryBase}&select=diagnosis_result,answers,participant_code&limit=1`,
       { method: "GET" },
     ),
     "campaign_user_read_failed",
@@ -160,6 +167,7 @@ export async function POST(request: Request) {
       passType: participant.pass_type,
       palette,
       coloring,
+      companion: campaignUser?.answers?.[0]?.answer,
     }, entrySecret);
     const target = payload.mode === "trial"
       ? new URL("/trial", request.url)
