@@ -1,23 +1,32 @@
 import type { ResultKey } from "./diagnosis";
 
-export const companionKeywordMap: Record<string, string> = {
-  "子どもと": "子ども",
-  "家族と": "家族",
-  "友人と": "友人",
-  "ひとりで": "ひとり",
+const segmentCodeMap: Record<string, Record<ResultKey, string>> = {
+  "子どもと": {
+    coloring: "KJ-2652ZK",
+    meal: "KJ-2YQS2T",
+    sweet: "KJ-397BKF",
+  },
+  "家族と": {
+    coloring: "KJ-4E764R",
+    meal: "KJ-7FUY5M",
+    sweet: "KJ-7QXMCX",
+  },
+  "友人と": {
+    coloring: "KJ-EAW27M",
+    meal: "KJ-QA28PD",
+    sweet: "KJ-QEXLHA",
+  },
+  "ひとりで": {
+    coloring: "KJ-UTRNN7",
+    meal: "KJ-XBP7D3",
+    sweet: "KJ-ZWUK77",
+  },
 };
 
-export const resultKeywordMap: Record<ResultKey, string> = {
-  coloring: "親子",
-  meal: "御膳",
-  sweet: "甘味",
-};
+const fallbackCode = "KJ-B9PQ2K";
 
-export const buildLstepSegmentKeyword = (result: ResultKey, companion?: string) => {
-  const companionKey = companion ? companionKeywordMap[companion] : "";
-  if (!companionKey) return "休日診断_特典獲得";
-  return `休日診断_${companionKey}_${resultKeywordMap[result]}`;
-};
+export const buildLstepSegmentKeyword = (result: ResultKey, companion?: string) =>
+  (companion ? segmentCodeMap[companion]?.[result] : undefined) || fallbackCode;
 
 export const buildLstepSegmentUrl = (
   result: ResultKey,
