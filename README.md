@@ -32,6 +32,7 @@ SupabaseのSQL Editorで次の順に実行してください。
 
 1. `supabase/migrations/202608200001_holiday_diagnosis.sql`
 2. `supabase/migrations/202608200002_line_campaign_coupons.sql`
+3. `supabase/migrations/202608200003_table_same_day_coloring_pass.sql`
 
 ## 環境変数
 
@@ -64,9 +65,10 @@ COUPON_STAFF_PIN=スタッフだけが知るPIN
 1. LINEの休日診断で「ぬりえ参加」になった人へ先行参加PASSを保存
 2. 8月21日までは、お試しギャラリーの参加URLを1回だけ発行
 3. お試し作品は本番の作品提出・特典付与の対象外
-4. 8月22日以降は店内の卓上QRからLINE本人確認
-5. 先行参加PASSは「金茶・抹茶・桜・藍」の限定色を追加、当日参加PASSはスタンダード8色
-6. 作品データへ先行参加／当日参加とパレット区分を保存
+4. 8月22日以降は店内の卓上QRからLINE本人確認し、参加権がない人へ当日参加PASSを自動発行
+5. 御膳・甘味の診断結果とクーポンは保持したまま、ぬりえ参加PASSを別管理
+6. 先行参加PASSは「金茶・抹茶・桜・藍」の限定色を追加、当日参加PASSはスタンダード8色
+7. 作品データへ先行参加／当日参加とパレット区分を保存
 
 ## QRのURL
 
