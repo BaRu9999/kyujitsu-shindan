@@ -21,7 +21,7 @@ export default function TrialPage() {
   const [entry, setEntry] = useState<Entry | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [selectedColor, setSelectedColor] = useState(palette[4][1]);
+  const [selectedColor, setSelectedColor] = useState<string>(palette[4][1]);
   const [fills, setFills] = useState<Record<string,string>>({});
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [complete, setComplete] = useState(false);
