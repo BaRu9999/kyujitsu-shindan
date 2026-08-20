@@ -33,6 +33,11 @@ type ColoringPass = {
 
 const STORAGE_KEY = "kyujitsu-diagnosis-v2";
 const EVENT_START = "2026-08-22";
+const coloringOptions = [
+  { title: "朝顔と風鈴", description: "朝顔と風鈴の涼やかな夏の一枚" },
+  { title: "金魚と水紋", description: "水の中を泳ぐ二匹の金魚" },
+  { title: "和菓子とお茶", description: "湯のみと和菓子を楽しむ茶時間" },
+] as const;
 
 const results = {
   coloring: {
@@ -123,7 +128,7 @@ export default function Home() {
   const [saved, setSaved] = useState<SavedDiagnosis | null>(null);
   const [coloringPass, setColoringPass] = useState<ColoringPass | null>(null);
   const [source, setSource] = useState("direct");
-  const [selectedColoring, setSelectedColoring] = useState("秋の茶寮");
+  const [selectedColoring, setSelectedColoring] = useState("朝顔と風鈴");
   const [ready, setReady] = useState(false);
   const [demo, setDemo] = useState(false);
   const [currentDay, setCurrentDay] = useState(japanDayKey());
@@ -471,6 +476,7 @@ export default function Home() {
           </div>
           <p className="section-kicker">{isTrial ? "8月20日・21日だけの先行体験" : "8月22日からの本イベント"}</p>
           <h1>{isTrial ? <>お試しの一枚を<br />選んでください</> : <>今日の一枚を<br />選んでください</>}</h1>
+          {isTrial && <p className="microcopy">3種類から1枚選べます｜お試しは1回限定</p>}
           {!isTrial && (
             <div className={`palette-perk ${isAdvance ? "advance" : "standard"}`}>
               <b>{isAdvance ? "先行参加特典" : "当日参加"}</b>
@@ -478,23 +484,24 @@ export default function Home() {
             </div>
           )}
           <div className="coloring-choices" role="radiogroup" aria-label="ぬりえを選ぶ">
-            {["秋の茶寮", "どうぶつの昼下がり", "和菓子の時間"].map((item, index) => (
+            {coloringOptions.map((item, index) => (
               <button
-                key={item}
-                className={`coloring-choice ${selectedColoring === item ? "selected" : ""}`}
-                onClick={() => { if (!ready) setSelectedColoring(item); }}
+                key={item.title}
+                className={`coloring-choice ${selectedColoring === item.title ? "selected" : ""}`}
+                onClick={() => { if (!ready) setSelectedColoring(item.title); }}
                 disabled={ready}
                 role="radio"
-                aria-checked={selectedColoring === item}
+                aria-checked={selectedColoring === item.title}
               >
-                <span className={`line-art art-${index + 1}`} aria-hidden="true" />
-                <strong>{item}</strong>
-                <small>{isTrial ? "お試し版・1回だけ" : "6〜8色・約3分"}</small>
+                <ColoringChoicePreview index={index} />
+                <strong>{item.title}</strong>
+                <small>{item.description}</small>
+                <small>{isTrial ? "約2〜3分" : "6〜8色・約3分"}</small>
               </button>
             ))}
           </div>
           {!ready ? (
-            <button className="primary-button" onClick={() => void beginColoring(isTrial)}>{isTrial ? "このぬりえを試す" : "このぬりえで始める"}</button>
+            <button className="primary-button" onClick={() => void beginColoring(isTrial)}>{isTrial ? "このぬりえで遊ぶ" : "このぬりえで始める"}</button>
           ) : (
             <div className="ready-card" role="status">
               <strong>「{selectedColoring}」を選びました</strong>
@@ -686,6 +693,43 @@ export default function Home() {
       </div>
       <Decorations />
     </main>
+  );
+}
+
+function ColoringChoicePreview({ index }: { index: number }) {
+  const common = { fill: "#fff", stroke: "#514c45", strokeWidth: 5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  return (
+    <svg viewBox="0 0 240 180" aria-hidden="true" style={{ width: "100%", height: 120, display: "block", background: "#fffdf8", border: "1px solid #9a9185" }}>
+      {index === 0 && <g {...common}>
+        <path d="M32 76C38 38 78 28 103 50C124 69 112 106 83 111C54 116 27 101 32 76Z" />
+        <circle cx="70" cy="73" r="10" />
+        <path d="M71 112C82 130 84 145 80 160M34 126C58 110 82 115 91 139C67 146 49 141 34 126Z" />
+        <path d="M174 28V62M145 67Q174 46 203 67L195 122Q174 143 153 122Z" />
+        <path d="M166 122H182L179 145H169Z" />
+        <path d="M174 145V160" />
+      </g>}
+      {index === 1 && <g {...common}>
+        <ellipse cx="82" cy="70" rx="46" ry="29" />
+        <path d="M123 67Q170 30 190 69Q174 105 124 82Z" />
+        <path d="M74 41Q94 16 112 43M74 99Q94 124 112 98" />
+        <circle cx="57" cy="64" r="4" fill="#514c45" />
+        <ellipse cx="151" cy="126" rx="32" ry="20" />
+        <path d="M180 124Q207 102 218 127Q205 149 181 137Z" />
+        <circle cx="136" cy="121" r="3" fill="#514c45" />
+        <circle cx="31" cy="31" r="6" /><circle cx="207" cy="37" r="5" />
+      </g>}
+      {index === 2 && <g {...common}>
+        <ellipse cx="72" cy="67" rx="36" ry="9" />
+        <path d="M37 68Q42 118 72 123Q102 118 107 68Z" />
+        <ellipse cx="72" cy="68" rx="31" ry="8" />
+        <ellipse cx="159" cy="126" rx="58" ry="16" />
+        <circle cx="130" cy="116" r="18" />
+        <circle cx="168" cy="116" r="16" />
+        <circle cx="201" cy="116" r="16" />
+        <path d="M114 116H217" />
+        <path d="M163 43Q184 20 204 43Q184 64 163 43Z" />
+      </g>}
+    </svg>
   );
 }
 
