@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 type ResultKey = "coloring" | "meal" | "sweet";
@@ -356,6 +357,10 @@ export default function Home() {
       <main className="paper-shell result-shell" style={{ "--result-color": result.color } as React.CSSProperties}>
         {renderHeader()}
         <section className="result-card">
+          <div className="weekend-result-banner" aria-label="土日限定">
+            <b>土・日限定</b>
+            <span>週末だけの休日診断</span>
+          </div>
           <div className="result-mark" aria-hidden="true">{result.mark}</div>
           <p className="result-label">あなたの休日タイプは</p>
           <p className="result-kicker">{result.kicker}</p>
@@ -388,25 +393,60 @@ export default function Home() {
 
           {saved.result === "meal" && (
             <div className="offer-box price-offer">
-              <span>診断結果限定セット特典</span>
+              <span>土日・診断結果限定セット特典</span>
               <strong>選べる御膳＋和紅茶</strong>
+              <div className="set-photo-grid" aria-label="対象となる2種類の御膳と和紅茶">
+                <figure className="set-photo-card">
+                  <Image
+                    src="/images/gozen-set-01.jpeg"
+                    alt="対象御膳と和紅茶のセット写真1"
+                    width={1448}
+                    height={1086}
+                    sizes="(max-width: 640px) 43vw, 240px"
+                    priority
+                  />
+                  <figcaption>対象御膳 1</figcaption>
+                </figure>
+                <figure className="set-photo-card">
+                  <Image
+                    src="/images/gozen-set-02.jpeg"
+                    alt="対象御膳と和紅茶のセット写真2"
+                    width={1448}
+                    height={1086}
+                    sizes="(max-width: 640px) 43vw, 240px"
+                    priority
+                  />
+                  <figcaption>対象御膳 2</figcaption>
+                </figure>
+              </div>
               <div className="price-row"><del>和紅茶 通常495円</del><b>セット時375円</b></div>
-              <p>お好きな御膳と和紅茶を一緒にご注文で、合計から120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
+              <p>土日に、お好きな御膳と和紅茶を一緒にご注文で、合計から120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
             </div>
           )}
 
           {saved.result === "sweet" && (
             <div className="offer-box price-offer">
-              <span>診断結果限定セット特典</span>
+              <span>土日・診断結果限定セット特典</span>
               <strong>二色わらび餅＋和紅茶</strong>
+              <figure className="set-photo-card set-photo-wide">
+                <Image
+                  src="/images/warabi-tea-set.jpeg"
+                  alt="二色わらび餅と和紅茶のセット写真"
+                  width={1448}
+                  height={1086}
+                  sizes="(max-width: 640px) 86vw, 490px"
+                  priority
+                />
+                <figcaption>二色わらび餅と和紅茶</figcaption>
+              </figure>
               <div className="price-row"><del>通常 1,243円</del><b>1,123円</b></div>
-              <p>診断した方だけの120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
+              <p>土日に使える、診断した方だけの120円OFF。ご注文時にこの画面をスタッフへお見せください。</p>
             </div>
           )}
 
           <div className="validity">
             <span>{saved.result === "coloring" ? "本イベント参加番号" : "本日の参加番号"}</span><b>{formatPassNumber(saved)}</b>
-            <small>{saved.result === "coloring" ? "8月22日以降もこの端末で有効" : "当日限り・1回まで"}</small>
+            <small>{saved.result === "coloring" ? "8月22日以降の土日にこの端末で有効" : "土日・当日限り・1回まで"}</small>
           </div>
           {demo && <button className="text-button" onClick={restartForDemo}>デモ用：結果をリセット</button>}
         </section>

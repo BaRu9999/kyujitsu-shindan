@@ -129,6 +129,10 @@ button { font: inherit; }
 
 .result-shell { padding-bottom: 60px; }
 .result-card { max-width: 570px; margin: 44px auto 0; padding: 36px; border: 1px solid rgba(44,33,25,.28); text-align: center; background: rgba(255,255,255,.43); box-shadow: 10px 10px 0 color-mix(in srgb, var(--result-color) 22%, transparent); }
+.weekend-result-banner { display: inline-flex; align-items: stretch; margin: -8px auto 28px; border: 1px solid var(--ink); background: rgba(255,255,255,.62); transform: rotate(-1deg); }
+.weekend-result-banner b, .weekend-result-banner span { display: grid; min-height: 34px; place-items: center; padding: 7px 12px; font-size: 10px; font-weight: 900; letter-spacing: .1em; }
+.weekend-result-banner b { color: #fff; background: var(--ink); }
+.weekend-result-banner span { color: var(--ink); }
 .result-mark { display: grid; width: 78px; height: 78px; margin: -8px auto 22px; place-items: center; border: 2px solid var(--result-color); border-radius: 50%; color: var(--result-color); font-family: "Yu Mincho", serif; font-size: 38px; font-weight: 900; }
 .result-label { margin: 0; color: #766958; font-size: 11px; letter-spacing: .12em; }
 .result-kicker { display: inline-block; margin: 12px 0 10px; padding: 5px 10px; color: #fff; background: var(--result-color); font-family: "Yu Mincho", serif; font-size: 15px; font-weight: 800; letter-spacing: .08em; }
@@ -138,6 +142,12 @@ button { font: inherit; }
 .offer-box > span { display: block; margin-bottom: 7px; color: var(--result-color); font-size: 11px; font-weight: 900; letter-spacing: .1em; }
 .offer-box > strong { display: block; font-family: "Yu Mincho", serif; font-size: 20px; }
 .offer-box p { margin: 12px auto 0; color: #625646; font-size: 12px; line-height: 1.7; }
+.set-photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px auto 4px; }
+.set-photo-card { position: relative; margin: 0; overflow: hidden; border: 1px solid rgba(44,33,25,.28); background: #fffaf0; box-shadow: 3px 3px 0 color-mix(in srgb, var(--result-color) 16%, transparent); }
+.set-photo-card img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.set-photo-card figcaption { padding: 7px 8px; color: #5d5143; font-family: "Yu Mincho", serif; font-size: 10px; font-weight: 800; letter-spacing: .05em; }
+.set-photo-wide { margin: 18px auto 4px; }
+.set-photo-wide figcaption { font-size: 11px; }
 .coloring-offer .primary-button { margin-top: 20px; }
 .pass-badge {
   display: grid;
