@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { callSupabaseRpc, getSupabaseAdminConfig, supabaseAdminRequest } from "@/app/lib/supabase-server";
 import { pushResultCoupon, verifyLineIdToken } from "@/app/lib/line-server";
 
@@ -21,8 +22,26 @@ type CampaignUser = {
   was_existing?: boolean;
 };
 
+type ColoringPass = {
+  participantCode: string;
+  token: string;
+  passType: "advance" | "same_day";
+  source: string;
+  diagnosedOn: string;
+  previewUsed: boolean;
+  created: boolean;
+};
+
 const campaignId = () => process.env.DIAGNOSIS_CAMPAIGN_ID || "weekend-2026-08-22";
+const eventStart = () => process.env.DIAGNOSIS_EVENT_START || "2026-08-22";
 const cleanSource = (source?: string) => (source || "line").slice(0, 40);
+const japanDayKey = () => new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(new Date());
+const passToken = () => randomBytes(4).toString("hex").toUpperCase();
 
 const fetchDiagnosis = async (
   config: { url: string; key: string },
@@ -56,12 +75,14 @@ export async function POST(request: Request) {
   try {
     const lineUser = await verifyLineIdToken(payload.idToken);
     const currentCampaign = campaignId();
+    const currentDay = japanDayKey();
+    const requestSource = cleanSource(payload.source);
     let campaignUser = payload.action === "opened"
       ? await callSupabaseRpc<CampaignUser>(config, "register_diagnosis_campaign_open", {
         p_campaign_id: currentCampaign,
         p_line_user_id: lineUser.sub,
         p_line_display_name: lineUser.name || "",
-        p_source: cleanSource(payload.source),
+        p_source: requestSource,
       })
       : await callSupabaseRpc<CampaignUser>(config, "mark_diagnosis_campaign_started", {
         p_campaign_id: currentCampaign,
@@ -85,6 +106,19 @@ export async function POST(request: Request) {
         p_line_user_id: lineUser.sub,
         p_sent: delivery.sent,
         p_error: delivery.error || "",
+      });
+    }
+
+    let coloringPass: ColoringPass | null = null;
+    if (payload.action === "opened" && requestSource === "table" && currentDay >= eventStart()) {
+      const generatedToken = passToken();
+      coloringPass = await callSupabaseRpc<ColoringPass>(config, "issue_table_coloring_pass", {
+        p_campaign_id: currentCampaign,
+        p_line_user_id: lineUser.sub,
+        p_participant_code: `DAY-${generatedToken}`,
+        p_token: generatedToken,
+        p_source: requestSource,
+        p_diagnosed_on: currentDay,
       });
     }
 
@@ -112,6 +146,7 @@ export async function POST(request: Request) {
       campaignId: currentCampaign,
       completed: Boolean(diagnosis),
       diagnosis,
+      coloringPass,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "line_session_failed";
