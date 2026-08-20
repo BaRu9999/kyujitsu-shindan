@@ -27,8 +27,17 @@ export async function GET(request: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const url = new URL(request.url);
+  const dataset = url.searchParams.get("dataset") || "participants";
+  const datasets = {
+    participants: { view: "sheet_participation_export", order: "created_at.desc" },
+    funnel: { view: "sheet_diagnosis_funnel_export", order: "first_opened_at.desc" },
+  } as const;
+  const selected = datasets[dataset as keyof typeof datasets];
+  if (!selected) return Response.json({ error: "invalid_dataset" }, { status: 400 });
+
   const response = await fetch(
-    `${supabaseUrl}/rest/v1/sheet_participation_export?select=*&order=created_at.desc&limit=5000`,
+    `${supabaseUrl}/rest/v1/${selected.view}?select=*&order=${selected.order}&limit=5000`,
     {
       headers: {
         apikey: supabaseKey,

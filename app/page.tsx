@@ -2,22 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { questions, type Answer, type ResultKey } from "./lib/diagnosis";
 
-type ResultKey = "coloring" | "meal" | "sweet";
 type View = "intro" | "question" | "result" | "table-gate" | "coloring-ready" | "preview-gallery";
 type PassType = "advance" | "same_day";
-
-type Answer = {
-  label: string;
-  note?: string;
-  score: Record<ResultKey, number>;
-};
-
-type Question = {
-  eyebrow: string;
-  title: string;
-  answers: Answer[];
-};
+type LineStatus = "inactive" | "loading" | "ready" | "error";
 
 type SavedDiagnosis = {
   result: ResultKey;
@@ -27,50 +16,13 @@ type SavedDiagnosis = {
   previewUsed: boolean;
   eventEligible: boolean;
   passType: PassType | null;
+  campaignId?: string;
+  couponCode?: string;
+  couponSent?: boolean;
 };
 
 const STORAGE_KEY = "kyujitsu-diagnosis-v2";
 const EVENT_START = "2026-08-22";
-
-const questions: Question[] = [
-  {
-    eyebrow: "まずは、今日のこと",
-    title: "今日は、誰と一緒ですか？",
-    answers: [
-      { label: "子どもと", note: "いっしょに楽しみたい", score: { coloring: 3, meal: 0, sweet: 0 } },
-      { label: "家族と", note: "ゆっくり過ごしたい", score: { coloring: 1, meal: 2, sweet: 0 } },
-      { label: "友人と", note: "おしゃべりも楽しみたい", score: { coloring: 0, meal: 1, sweet: 2 } },
-      { label: "ひとりで", note: "自分の時間を味わいたい", score: { coloring: 0, meal: 1, sweet: 2 } },
-    ],
-  },
-  {
-    eyebrow: "いまの気分をひとつ",
-    title: "今日、いちばん大切にしたいことは？",
-    answers: [
-      { label: "一緒に楽しむ", note: "小さな思い出をつくりたい", score: { coloring: 3, meal: 0, sweet: 0 } },
-      { label: "しっかり満たす", note: "食事で休日の満足感を味わいたい", score: { coloring: 0, meal: 3, sweet: 0 } },
-      { label: "ほっと休む", note: "甘味とお茶で気持ちをゆるめたい", score: { coloring: 0, meal: 0, sweet: 3 } },
-    ],
-  },
-  {
-    eyebrow: "お店での過ごし方",
-    title: "どんな時間が心地よさそう？",
-    answers: [
-      { label: "手を動かして楽しむ", note: "短時間でもわくわくしたい", score: { coloring: 3, meal: 0, sweet: 0 } },
-      { label: "食事をゆっくり味わう", note: "休日らしい満足感がほしい", score: { coloring: 0, meal: 3, sweet: 0 } },
-      { label: "お茶を飲みながら休む", note: "余白のある時間にしたい", score: { coloring: 0, meal: 0, sweet: 3 } },
-    ],
-  },
-  {
-    eyebrow: "最後は、直感で",
-    title: "気になる言葉を選んでください",
-    answers: [
-      { label: "つくる", note: "手を動かして楽しむ", score: { coloring: 3, meal: 0, sweet: 0 } },
-      { label: "満たす", note: "食事をゆっくり味わう", score: { coloring: 0, meal: 3, sweet: 0 } },
-      { label: "ほどく", note: "甘味とお茶でひと息", score: { coloring: 0, meal: 0, sweet: 3 } },
-    ],
-  },
-];
 
 const results = {
   coloring: {
@@ -164,15 +116,22 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [demo, setDemo] = useState(false);
   const [currentDay, setCurrentDay] = useState(japanDayKey());
+  const [answerIndexes, setAnswerIndexes] = useState<number[]>([]);
+  const [lineIdToken, setLineIdToken] = useState("");
+  const [lineStatus, setLineStatus] = useState<LineStatus>("inactive");
+  const [lineError, setLineError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const nextSource = params.get("source") || "direct";
     const isDemo = params.get("demo") === "1";
     const effectiveDay = isDemo && params.get("date") ? params.get("date")! : japanDayKey();
-    setSource(nextSource);
-    setDemo(isDemo);
-    setCurrentDay(effectiveDay);
+    queueMicrotask(() => {
+      setSource(nextSource);
+      setDemo(isDemo);
+      setCurrentDay(effectiveDay);
+    });
 
     let validSaved: SavedDiagnosis | null = null;
     try {
@@ -186,19 +145,69 @@ export default function Home() {
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
     }
-    setSaved(validSaved);
-
-    if (nextSource === "table") {
-      if (!validSaved) setView("table-gate");
-      else if (validSaved.result === "coloring" && effectiveDay >= EVENT_START) {
-        setView("coloring-ready");
-        void syncParticipation(validSaved, "table_qr_opened", { openedOn: effectiveDay });
+    if (nextSource === "line") {
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (!liffId) {
+        queueMicrotask(() => {
+          setLineStatus("error");
+          setLineError("LINE連携の設定がまだ完了していません。");
+        });
+        return;
       }
-      else if (validSaved.result === "coloring" && !validSaved.previewUsed) setView("preview-gallery");
-      else setView("result");
-      return;
+      queueMicrotask(() => setLineStatus("loading"));
+      let cancelled = false;
+      void (async () => {
+        try {
+          const liff = (await import("@line/liff")).default;
+          await liff.init({ liffId });
+          if (!liff.isLoggedIn()) {
+            liff.login({ redirectUri: window.location.href });
+            return;
+          }
+          const idToken = liff.getIDToken();
+          if (!idToken) throw new Error("LINEの本人確認情報を取得できませんでした。");
+          const response = await fetch("/api/line/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken, action: "opened", source: nextSource }),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "LINE参加情報を確認できませんでした。");
+          if (cancelled) return;
+          setLineIdToken(idToken);
+          setLineStatus("ready");
+          if (data.completed && data.diagnosis) {
+            const existing = normalizeSavedDiagnosis(data.diagnosis as SavedDiagnosis);
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+            setSaved(existing);
+            setView("result");
+          } else {
+            setSaved(null);
+            setView("intro");
+          }
+        } catch (error) {
+          if (cancelled) return;
+          setLineStatus("error");
+          setLineError(error instanceof Error ? error.message : "LINE参加情報を確認できませんでした。");
+        }
+      })();
+      return () => { cancelled = true; };
     }
-    if (validSaved) setView("result");
+
+    queueMicrotask(() => {
+      setSaved(validSaved);
+      if (nextSource === "table") {
+        if (!validSaved) setView("table-gate");
+        else if (validSaved.result === "coloring" && effectiveDay >= EVENT_START) {
+          setView("coloring-ready");
+          void syncParticipation(validSaved, "table_qr_opened", { openedOn: effectiveDay });
+        }
+        else if (validSaved.result === "coloring" && !validSaved.previewUsed) setView("preview-gallery");
+        else setView("result");
+        return;
+      }
+      if (validSaved) setView("result");
+    });
   }, []);
 
   const currentQuestion = questions[questionIndex];
@@ -212,16 +221,42 @@ export default function Home() {
     return "店内限定";
   }, [source]);
 
-  const chooseAnswer = (answer: Answer) => {
+  const chooseAnswer = async (answer: Answer, answerIndex: number) => {
+    if (submitting) return;
     const nextScores = {
       coloring: scores.coloring + answer.score.coloring,
       meal: scores.meal + answer.score.meal,
       sweet: scores.sweet + answer.score.sweet,
     };
+    const nextAnswerIndexes = [...answerIndexes, answerIndex];
     setScores(nextScores);
+    setAnswerIndexes(nextAnswerIndexes);
 
     if (questionIndex < questions.length - 1) {
       setQuestionIndex((index) => index + 1);
+      return;
+    }
+
+    if (source === "line" && lineIdToken) {
+      setSubmitting(true);
+      setLineError("");
+      try {
+        const response = await fetch("/api/line/diagnosis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: lineIdToken, answerIndexes: nextAnswerIndexes, source }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.diagnosis) throw new Error(data.error || "診断結果を保存できませんでした。");
+        const nextSaved = normalizeSavedDiagnosis(data.diagnosis as SavedDiagnosis);
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSaved));
+        setSaved(nextSaved);
+        setView("result");
+      } catch (error) {
+        setLineError(error instanceof Error ? error.message : "診断結果を保存できませんでした。");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -245,9 +280,32 @@ export default function Home() {
     window.localStorage.removeItem(STORAGE_KEY);
     setSaved(null);
     setScores({ coloring: 0, meal: 0, sweet: 0 });
+    setAnswerIndexes([]);
     setQuestionIndex(0);
     setView("intro");
     setReady(false);
+  };
+
+  const startDiagnosis = async () => {
+    if (source === "line") {
+      if (!lineIdToken) return;
+      setSubmitting(true);
+      setLineError("");
+      try {
+        const response = await fetch("/api/line/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: lineIdToken, action: "started", source }),
+        });
+        if (!response.ok) throw new Error("診断開始を記録できませんでした。");
+      } catch (error) {
+        setLineError(error instanceof Error ? error.message : "診断を開始できませんでした。");
+        setSubmitting(false);
+        return;
+      }
+      setSubmitting(false);
+    }
+    setView("question");
   };
 
   const beginColoring = (trial: boolean) => {
@@ -272,6 +330,37 @@ export default function Home() {
       <span className="source-chip">{sourceLabel}</span>
     </header>
   );
+
+  if (lineStatus === "loading") {
+    return (
+      <main className="paper-shell">
+        {renderHeader()}
+        <section className="center-panel line-status-panel" role="status">
+          <span className="line-loader" aria-hidden="true" />
+          <p className="section-kicker">LINE参加情報を確認中</p>
+          <h1>少しだけ<br />お待ちください</h1>
+          <p className="microcopy">同じキャンペーンでは、診断は1人1回だけです。</p>
+        </section>
+        <Decorations />
+      </main>
+    );
+  }
+
+  if (lineStatus === "error") {
+    return (
+      <main className="paper-shell">
+        {renderHeader()}
+        <section className="center-panel line-status-panel">
+          <div className="stamp stamp-error">!</div>
+          <p className="section-kicker">LINE連携を確認できませんでした</p>
+          <h1>LINEから<br />もう一度開いてください</h1>
+          <p className="lead">{lineError}</p>
+          <button className="primary-button" onClick={() => window.location.reload()}>もう一度確認する</button>
+        </section>
+        <Decorations />
+      </main>
+    );
+  }
 
   if (view === "table-gate") {
     return (
@@ -448,6 +537,13 @@ export default function Home() {
             <span>{saved.result === "coloring" ? "本イベント参加番号" : "本日の参加番号"}</span><b>{formatPassNumber(saved)}</b>
             <small>{saved.result === "coloring" ? "8月22日以降の土日にこの端末で有効" : "土日・当日限り・1回まで"}</small>
           </div>
+          {saved.couponCode && (
+            <div className={`line-coupon-status ${saved.couponSent ? "sent" : "pending"}`}>
+              <span>{saved.couponSent ? "LINEへ送信済み" : "LINE送信を確認中"}</span>
+              <strong>{saved.couponCode}</strong>
+              <small>店頭でスタッフが使用済み処理をすると、再利用できません。</small>
+            </div>
+          )}
           {demo && <button className="text-button" onClick={restartForDemo}>デモ用：結果をリセット</button>}
         </section>
         <Decorations />
@@ -468,13 +564,14 @@ export default function Home() {
           <h1>{currentQuestion.title}</h1>
           <div className="answer-list">
             {currentQuestion.answers.map((answer, index) => (
-              <button key={answer.label} className="answer-button" onClick={() => chooseAnswer(answer)}>
+              <button key={answer.label} className="answer-button" onClick={() => void chooseAnswer(answer, index)} disabled={submitting}>
                 <span className="answer-number">{index + 1}</span>
                 <span><strong>{answer.label}</strong>{answer.note && <small>{answer.note}</small>}</span>
                 <span className="arrow">→</span>
               </button>
             ))}
           </div>
+          {lineError && <p className="form-error" role="alert">{lineError}</p>}
         </section>
         <Decorations />
       </main>
@@ -492,8 +589,10 @@ export default function Home() {
         <p className="hero-kicker">4つのことばでわかる</p>
         <h1><span>今日の</span><br />休日診断</h1>
         <p className="hero-copy">今の気分に合う、店内での過ごし方をご案内します。考えすぎず、気になることばを選んでください。</p>
+        {source === "line" && lineStatus === "ready" && <div className="line-ready-note"><b>LINE本人確認済み</b><span>このキャンペーンの診断は1人1回です。結果別クーポンは診断後にLINEへ届きます。</span></div>}
         {isPreviewPeriod && <div className="prelaunch-note"><b>ぬりえタイプの方限定</b><span>お試しギャラリーを1回楽しめて、8月22日の本参加権も保存されます。</span></div>}
-        <button className="primary-button hero-button" onClick={() => setView("question")}>診断をはじめる <span>→</span></button>
+        <button className="primary-button hero-button" onClick={() => void startDiagnosis()} disabled={submitting}>{submitting ? "確認中…" : "診断をはじめる"} <span>→</span></button>
+        {lineError && <p className="form-error" role="alert">{lineError}</p>}
         <div className="intro-facts"><span>約30秒</span><span>全4問</span><span>参加無料</span></div>
       </section>
       <div className="type-preview" aria-label="3つの診断結果">

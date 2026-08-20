@@ -75,6 +75,9 @@ button { font: inherit; }
 .prelaunch-note { display: grid; max-width: 430px; margin: 22px auto 0; padding: 13px 16px; border: 1px dashed var(--teal); background: rgba(255,255,255,.4); }
 .prelaunch-note b { color: var(--teal); font-size: 11px; letter-spacing: .08em; }
 .prelaunch-note span { margin-top: 5px; color: #625647; font-size: 11px; line-height: 1.6; }
+.line-ready-note { display: grid; max-width: 430px; margin: 22px auto 0; padding: 13px 16px; border: 1px solid #06c755; background: rgba(255,255,255,.52); }
+.line-ready-note b { color: #168442; font-size: 11px; letter-spacing: .08em; }
+.line-ready-note span { margin-top: 5px; color: #625647; font-size: 11px; line-height: 1.6; }
 
 .primary-button {
   display: inline-flex;
@@ -95,6 +98,7 @@ button { font: inherit; }
 }
 .primary-button:hover { transform: translate(-2px,-2px); box-shadow: 9px 9px 0 rgba(22,139,139,.32); }
 .primary-button:active { transform: translate(3px,3px); box-shadow: 2px 2px 0 rgba(22,139,139,.25); }
+.primary-button:disabled { cursor: wait; opacity: .65; transform: none; }
 .primary-button:focus-visible, .answer-button:focus-visible, .coloring-choice:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
 .hero-button { margin-top: 34px; min-width: 250px; }
 .intro-facts { display: flex; justify-content: center; gap: 10px; margin-top: 26px; }
@@ -113,6 +117,7 @@ button { font: inherit; }
 .answer-list { display: grid; gap: 12px; }
 .answer-button { display: grid; grid-template-columns: 34px 1fr 24px; align-items: center; gap: 14px; width: 100%; min-height: 76px; padding: 12px 18px; border: 1px solid rgba(44,33,25,.34); color: var(--ink); text-align: left; background: rgba(255,255,255,.38); cursor: pointer; transition: background .15s ease, transform .15s ease; }
 .answer-button:hover { background: #fffaf0; transform: translateX(4px); }
+.answer-button:disabled { cursor: wait; opacity: .62; transform: none; }
 .answer-number { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; color: #fff; background: var(--teal); font-family: Georgia, serif; font-weight: 700; }
 .answer-button strong { display: block; font-size: 16px; }
 .answer-button small { display: block; margin-top: 5px; color: #746756; font-family: "Yu Mincho", serif; font-size: 12px; }
@@ -126,6 +131,11 @@ button { font: inherit; }
 .stamp { display: grid; width: 76px; height: 76px; margin: 0 auto 24px; place-items: center; border: 3px double currentColor; border-radius: 50%; font-family: "Yu Mincho", serif; font-size: 23px; font-weight: 900; transform: rotate(-7deg); }
 .stamp-blue { color: var(--teal); }
 .microcopy { margin-top: 20px; color: #786c5e; font-size: 11px; }
+.line-status-panel .lead { max-width: 440px; margin: 0 auto 26px; color: #655949; line-height: 1.8; }
+.line-loader { display: block; width: 54px; height: 54px; margin: 0 auto 26px; border: 5px solid rgba(22,139,139,.18); border-top-color: var(--teal); border-radius: 50%; animation: line-spin .8s linear infinite; }
+.stamp-error { color: var(--vermilion); }
+.form-error { max-width: 430px; margin: 18px auto 0; color: #b03627; font-size: 11px; line-height: 1.7; }
+@keyframes line-spin { to { transform: rotate(360deg); } }
 
 .result-shell { padding-bottom: 60px; }
 .result-card { max-width: 570px; margin: 44px auto 0; padding: 36px; border: 1px solid rgba(44,33,25,.28); text-align: center; background: rgba(255,255,255,.43); box-shadow: 10px 10px 0 color-mix(in srgb, var(--result-color) 22%, transparent); }
@@ -178,7 +188,26 @@ button { font: inherit; }
 .validity { display: grid; grid-template-columns: 1fr auto; align-items: center; max-width: 320px; margin: 26px auto 0; padding: 11px 14px; border: 1px dashed rgba(44,33,25,.45); text-align: left; }
 .validity span, .validity small { color: #75695b; font-size: 10px; }
 .validity b { grid-row: span 2; font-family: Georgia, serif; font-size: 22px; letter-spacing: .14em; }
+.line-coupon-status { display: grid; max-width: 360px; gap: 5px; margin: 18px auto 0; padding: 13px 15px; border: 1px solid currentColor; background: rgba(255,255,255,.58); }
+.line-coupon-status.sent { color: #087979; }.line-coupon-status.pending { color: #9a6710; }
+.line-coupon-status span { font-size: 9px; font-weight: 900; letter-spacing: .12em; }
+.line-coupon-status strong { color: var(--ink); font-family: Georgia, serif; font-size: 18px; letter-spacing: .1em; }
+.line-coupon-status small { color: #75695b; font-size: 9px; line-height: 1.5; }
 .text-button { margin-top: 22px; padding: 6px; border: 0; color: #8a7b67; background: transparent; font-size: 10px; text-decoration: underline; cursor: pointer; }
+
+.redeem-shell { min-height: 100vh; }
+.redeem-panel .lead { max-width: 430px; margin: -8px auto 26px; color: #655949; font-size: 13px; line-height: 1.8; }
+.redeem-form { display: grid; max-width: 400px; gap: 16px; margin: 0 auto; text-align: left; }
+.redeem-form label span { display: block; margin-bottom: 6px; color: #625646; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.redeem-form input { width: 100%; min-height: 50px; border: 1px solid rgba(44,33,25,.4); border-radius: 0; padding: 10px 13px; color: var(--ink); background: rgba(255,255,255,.65); font: inherit; }
+.redeem-form input:focus { outline: 3px solid rgba(22,139,139,.25); border-color: var(--teal); }
+.redeem-form .primary-button { margin-top: 4px; }
+.redeem-form .primary-button:disabled { cursor: wait; opacity: .65; }
+.redeem-message { display: grid; max-width: 400px; gap: 5px; margin: 22px auto 0; padding: 15px; border: 1px solid currentColor; background: rgba(255,255,255,.56); }
+.redeem-message.success { color: #087979; }.redeem-message.warning { color: #9a6710; }.redeem-message.error { color: #b03627; }
+.redeem-message strong { font-family: "Yu Mincho", serif; font-size: 17px; }
+.redeem-message span, .redeem-message small { font-size: 11px; }
+.redeem-back { display: inline-block; }
 
 .coloring-panel { max-width: 620px; margin-top: 44px; }
 .permission-row { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 26px; padding: 7px 11px; border: 1px solid rgba(44,33,25,.24); font-size: 11px; font-weight: 700; background: rgba(255,255,255,.35); }
