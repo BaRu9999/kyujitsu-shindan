@@ -618,6 +618,34 @@ export default function Home() {
             </div>
           )}
 
+          <aside className="event-promo-card" aria-labelledby="coloring-event-title">
+            <div className="event-promo-visual" aria-hidden="true">
+              <Image
+                src="/images/coloring-event-result.webp"
+                alt=""
+                width={900}
+                height={900}
+                sizes="(max-width: 640px) 38vw, 220px"
+              />
+            </div>
+            <div className="event-promo-copy">
+              <span className="event-promo-date">{isPreviewPeriod ? "8月22日（土）スタート" : "土日限定・ただいま開催中"}</span>
+              <h2 id="coloring-event-title">親子で楽しむ<br />「わたしだけのぬりえ」</h2>
+              <strong className={`event-promo-status ${saved.result === "coloring" ? "pass" : "open"}`}>
+                {saved.result === "coloring"
+                  ? "✓ 先行参加PASSを獲得済み"
+                  : "診断結果に関係なく参加できます"}
+              </strong>
+              <p>{saved.result === "coloring"
+                ? "店内の卓上QRからすぐ参加できます。先行参加の方は、特別カラーパレットも使えます。"
+                : "ご来店時に店内の卓上QRを読み込むだけ。完成した作品を送ると特典がもらえます。"}</p>
+              <div className="event-promo-perks" aria-label="イベントの特徴">
+                <span>参加無料</span><span>予約不要</span><span>約3分</span>
+              </div>
+              <b className="event-promo-cta">ご注文後、卓上QRから参加 →</b>
+            </div>
+          </aside>
+
           {saved.result === "coloring" && (
             <div className="validity">
               <span>本イベント参加番号</span><b>{formatPassNumber(saved)}</b>
