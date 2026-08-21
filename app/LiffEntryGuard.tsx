@@ -2,9 +2,24 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 
-const recoverSourceFromLiffState = (rawState: string | null) => {
-  if (!rawState) return null;
+type EntrySource = "table" | "poster" | "line";
 
+const SOURCE_PRIORITY: EntrySource[] = ["table", "poster", "line"];
+
+const pickPreferredSource = (sources: Array<string | null | undefined>): EntrySource | null => {
+  const normalized = new Set(
+    sources
+      .filter((source): source is string => Boolean(source))
+      .map((source) => source.toLowerCase()),
+  );
+
+  return SOURCE_PRIORITY.find((source) => normalized.has(source)) || null;
+};
+
+const recoverSourcesFromLiffState = (rawState: string | null) => {
+  if (!rawState) return [] as string[];
+
+  const recovered: string[] = [];
   const candidates = [rawState];
   try {
     const decoded = decodeURIComponent(rawState);
@@ -18,15 +33,28 @@ const recoverSourceFromLiffState = (rawState: string | null) => {
       const stateUrl = candidate.startsWith("http")
         ? new URL(candidate)
         : new URL(candidate.startsWith("/") ? candidate : `/${candidate}`, window.location.origin);
-      const source = stateUrl.searchParams.get("source");
-      if (source === "table" || source === "line" || source === "poster") return source;
+      recovered.push(...stateUrl.searchParams.getAll("source"));
     } catch {
       // Try the next representation.
     }
   }
 
-  const match = rawState.match(/(?:^|[?&])source(?:%3D|=)(table|line|poster)(?:&|$)/i);
-  return match?.[1]?.toLowerCase() || null;
+  for (const match of rawState.matchAll(/(?:^|[?&])source(?:%3D|=)(table|line|poster)(?=&|$)/gi)) {
+    recovered.push(match[1]);
+  }
+
+  return recovered;
+};
+
+const getPreferredSource = (url: URL, rawState: string | null) => pickPreferredSource([
+  ...url.searchParams.getAll("source"),
+  ...recoverSourcesFromLiffState(rawState),
+]);
+
+const normalizeToSource = (source: EntrySource, origin: string) => {
+  const target = new URL("/", origin);
+  target.searchParams.set("source", source);
+  window.location.replace(target.toString());
 };
 
 export default function LiffEntryGuard({ children }: { children: ReactNode }) {
@@ -35,8 +63,17 @@ export default function LiffEntryGuard({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initialUrl = new URL(window.location.href);
     const initialState = initialUrl.searchParams.get("liff.state");
+    const initialSource = getPreferredSource(initialUrl, initialState);
+    const initialSources = initialUrl.searchParams.getAll("source");
 
+    // If the LIFF secondary redirect has already completed and both endpoint and
+    // additional source parameters are present, normalize before the app reads the
+    // first source value. Table always wins over poster, and poster over line.
     if (!initialState) {
+      if (initialSource && (initialSources.length > 1 || initialSources[0] !== initialSource)) {
+        normalizeToSource(initialSource, initialUrl.origin);
+        return;
+      }
       setReady(true);
       return;
     }
@@ -57,23 +94,13 @@ export default function LiffEntryGuard({ children }: { children: ReactNode }) {
         if (cancelled) return;
 
         const currentUrl = new URL(window.location.href);
-        const restoredSource = currentUrl.searchParams.get("source") || recoverSourceFromLiffState(initialState);
+        const currentState = currentUrl.searchParams.get("liff.state") || initialState;
+        const restoredSource = getPreferredSource(currentUrl, currentState);
 
-        // The table QR must never render the diagnosis page on the primary LIFF redirect.
-        // After liff.init() resolves, force a clean secondary-style URL and let the app
-        // boot from scratch as a table entry.
-        if (restoredSource === "table") {
-          const target = new URL("/", currentUrl.origin);
-          target.searchParams.set("source", "table");
-          window.location.replace(target.toString());
-          return;
-        }
-
-        // For the other LIFF entry sources, normalize them after LIFF initialization too.
-        if (restoredSource === "line" || restoredSource === "poster") {
-          const target = new URL("/", currentUrl.origin);
-          target.searchParams.set("source", restoredSource);
-          window.location.replace(target.toString());
+        // The endpoint may contribute source=line while the QR contributes
+        // source=table. Never let the endpoint value hide the QR source.
+        if (restoredSource) {
+          normalizeToSource(restoredSource, currentUrl.origin);
           return;
         }
 
