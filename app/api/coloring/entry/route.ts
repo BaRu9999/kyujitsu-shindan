@@ -1,6 +1,7 @@
 import { createColoringEntryToken, type ColoringEntryMode } from "@/app/lib/coloring-entry";
 import { verifyLineIdToken } from "@/app/lib/line-server";
 import { getSupabaseAdminConfig, supabaseAdminRequest } from "@/app/lib/supabase-server";
+import { findLegacyTableColoringPass } from "@/app/lib/table-coloring-pass";
 
 type EntryPayload = {
   idToken?: string;
@@ -99,9 +100,27 @@ export async function POST(request: Request) {
     const currentCampaign = campaignId();
     const currentDay = japanDayKey();
     const campaignUser = await fetchCampaignUser(config, currentCampaign, lineUser.sub);
-    const participantCode = payload.mode === "trial"
+    let participantCode = payload.mode === "trial"
       ? (campaignUser?.diagnosis_result === "coloring" ? campaignUser.participant_code : null)
       : campaignUser?.coloring_participant_code;
+
+    // If migration 003 is not installed, the campaign table has no coloring pass columns.
+    // Reuse the deterministic same-day pass created by the session fallback instead.
+    if (
+      payload.mode === "event" &&
+      !participantCode &&
+      payload.source === "table" &&
+      currentDay >= eventStart()
+    ) {
+      const legacyPass = await findLegacyTableColoringPass(
+        config,
+        currentCampaign,
+        lineUser.sub,
+        currentDay,
+      );
+      participantCode = legacyPass?.participantCode || null;
+    }
+
     if (!participantCode) {
       return Response.json({ error: "coloring_pass_not_found" }, { status: 403 });
     }
