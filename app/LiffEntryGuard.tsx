@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 
-const recoverTableSource = (rawState: string | null) => {
-  if (!rawState) return false;
+const recoverSourceFromLiffState = (rawState: string | null) => {
+  if (!rawState) return null;
 
   const candidates = [rawState];
   try {
@@ -18,13 +18,15 @@ const recoverTableSource = (rawState: string | null) => {
       const stateUrl = candidate.startsWith("http")
         ? new URL(candidate)
         : new URL(candidate.startsWith("/") ? candidate : `/${candidate}`, window.location.origin);
-      if (stateUrl.searchParams.get("source") === "table") return true;
+      const source = stateUrl.searchParams.get("source");
+      if (source === "table" || source === "line" || source === "poster") return source;
     } catch {
       // Try the next representation.
     }
   }
 
-  return /(?:^|[?&])source(?:%3D|=)table(?:&|$)/i.test(rawState);
+  const match = rawState.match(/(?:^|[?&])source(?:%3D|=)(table|line|poster)(?:&|$)/i);
+  return match?.[1]?.toLowerCase() || null;
 };
 
 export default function LiffEntryGuard({ children }: { children: ReactNode }) {
@@ -44,22 +46,40 @@ export default function LiffEntryGuard({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-        if (!liffId) return;
+        if (!liffId) {
+          if (!cancelled) setReady(true);
+          return;
+        }
 
         const liff = (await import("@line/liff")).default;
         await liff.init({ liffId });
 
-        const currentUrl = new URL(window.location.href);
-        const currentState = currentUrl.searchParams.get("liff.state") || initialState;
-        const isTable = currentUrl.searchParams.get("source") === "table" || recoverTableSource(currentState);
+        if (cancelled) return;
 
-        if (isTable) {
-          currentUrl.searchParams.set("source", "table");
-          window.history.replaceState(null, "", currentUrl.toString());
+        const currentUrl = new URL(window.location.href);
+        const restoredSource = currentUrl.searchParams.get("source") || recoverSourceFromLiffState(initialState);
+
+        // The table QR must never render the diagnosis page on the primary LIFF redirect.
+        // After liff.init() resolves, force a clean secondary-style URL and let the app
+        // boot from scratch as a table entry.
+        if (restoredSource === "table") {
+          const target = new URL("/", currentUrl.origin);
+          target.searchParams.set("source", "table");
+          window.location.replace(target.toString());
+          return;
         }
+
+        // For the other LIFF entry sources, normalize them after LIFF initialization too.
+        if (restoredSource === "line" || restoredSource === "poster") {
+          const target = new URL("/", currentUrl.origin);
+          target.searchParams.set("source", restoredSource);
+          window.location.replace(target.toString());
+          return;
+        }
+
+        setReady(true);
       } catch {
         // The page's existing LINE handling will show any LIFF error.
-      } finally {
         if (!cancelled) setReady(true);
       }
     })();
