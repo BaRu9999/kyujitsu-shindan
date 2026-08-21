@@ -624,8 +624,8 @@ export default function Home() {
                 src="/images/coloring-event-result.webp"
                 alt=""
                 width={900}
-                height={900}
-                sizes="(max-width: 640px) 38vw, 220px"
+                height={1274}
+                sizes="(max-width: 640px) 82vw, 220px"
               />
             </div>
             <div className="event-promo-copy">

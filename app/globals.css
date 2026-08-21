@@ -194,8 +194,8 @@ button { font: inherit; }
 .line-coupon-status strong { color: var(--ink); font-family: Georgia, serif; font-size: 18px; letter-spacing: .1em; }
 .line-coupon-status small { color: #75695b; font-size: 9px; line-height: 1.5; }
 .event-promo-card { display: grid; grid-template-columns: minmax(150px, 42%) 1fr; margin-top: 26px; overflow: hidden; border: 1px solid rgba(44,33,25,.34); text-align: left; background: #fbf5e9; box-shadow: 5px 5px 0 rgba(22,139,139,.14); }
-.event-promo-visual { position: relative; min-height: 100%; overflow: hidden; border-right: 1px solid rgba(44,33,25,.22); background: #f3ead8; }
-.event-promo-visual img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.event-promo-visual { display: flex; position: relative; min-height: 0; align-items: flex-start; overflow: hidden; border-right: 1px solid rgba(44,33,25,.22); background: #f3ead8; }
+.event-promo-visual img { display: block; width: 100%; height: auto; object-fit: contain; }
 .event-promo-copy { padding: 17px 16px 15px; }
 .event-promo-date { display: inline-block; margin-bottom: 8px; padding: 4px 8px; color: var(--ink); background: #efad64; font-size: 9px; font-weight: 900; letter-spacing: .09em; transform: rotate(-1deg); }
 .event-promo-copy h2 { margin: 0; font-family: "Yu Mincho", serif; font-size: 20px; line-height: 1.45; }
@@ -275,7 +275,8 @@ button { font: inherit; }
   .progress-track { margin-bottom: 38px; }
   .answer-button { min-height: 70px; padding: 10px 12px; }
   .result-card { margin-top: 34px; padding: 28px 18px; box-shadow: 6px 6px 0 color-mix(in srgb, var(--result-color) 22%, transparent); }
-  .event-promo-card { grid-template-columns: 112px 1fr; }
+  .event-promo-card { grid-template-columns: 1fr; }
+  .event-promo-visual { border-right: 0; border-bottom: 1px solid rgba(44,33,25,.22); }
   .event-promo-copy { padding: 13px 12px 12px; }
   .event-promo-date { margin-bottom: 6px; font-size: 8px; }
   .event-promo-copy h2 { font-size: 17px; }
