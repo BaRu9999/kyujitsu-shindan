@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { callSupabaseRpc, getSupabaseAdminConfig, supabaseAdminRequest } from "@/app/lib/supabase-server";
 import { pushResultCoupon, verifyLineIdToken } from "@/app/lib/line-server";
+import { findLegacyTableColoringPass, issueLegacyTableColoringPass } from "@/app/lib/table-coloring-pass";
 
 type SessionAction = "opened" | "started";
 
@@ -119,15 +120,41 @@ export async function POST(request: Request) {
 
     let coloringPass: ColoringPass | null = null;
     if (payload.action === "opened" && requestSource === "table" && currentDay >= eventStart()) {
-      const generatedToken = passToken();
-      coloringPass = await callSupabaseRpc<ColoringPass>(config, "issue_table_coloring_pass", {
-        p_campaign_id: currentCampaign,
-        p_line_user_id: lineUser.sub,
-        p_participant_code: `DAY-${generatedToken}`,
-        p_token: generatedToken,
-        p_source: requestSource,
-        p_diagnosed_on: currentDay,
-      });
+      // First reuse a deterministic fallback pass when one already exists. This keeps the
+      // same guest on the same pass even if migration 003 is applied later.
+      coloringPass = await findLegacyTableColoringPass(
+        config,
+        currentCampaign,
+        lineUser.sub,
+        currentDay,
+      );
+
+      if (!coloringPass) {
+        try {
+          const generatedToken = passToken();
+          coloringPass = await callSupabaseRpc<ColoringPass>(config, "issue_table_coloring_pass", {
+            p_campaign_id: currentCampaign,
+            p_line_user_id: lineUser.sub,
+            p_participant_code: `DAY-${generatedToken}`,
+            p_token: generatedToken,
+            p_source: requestSource,
+            p_diagnosed_on: currentDay,
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "";
+          if (!message.startsWith("supabase_rpc_failed:issue_table_coloring_pass")) throw error;
+
+          // Migration 003 may not yet be installed in production. The base participant
+          // tables from migration 001 are enough to issue a safe same-day pass.
+          coloringPass = await issueLegacyTableColoringPass(
+            config,
+            currentCampaign,
+            lineUser.sub,
+            requestSource,
+            currentDay,
+          );
+        }
+      }
     }
 
     let diagnosis = null;
