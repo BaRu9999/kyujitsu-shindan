@@ -190,7 +190,8 @@ export async function POST(request: Request) {
     }, entrySecret);
     const target = payload.mode === "trial"
       ? new URL("/trial", request.url)
-      : new URL("/app-current", galleryUrl);
+      : new URL(galleryUrl);
+    if (payload.mode === "event") target.searchParams.set("v", "20260822-home-v3");
     target.searchParams.set("entry", entryToken);
 
     return Response.json({
