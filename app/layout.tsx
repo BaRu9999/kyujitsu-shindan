@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import LiffEntryGuard from "./LiffEntryGuard";
 import "./globals.css";
 import "./trial-preview-overrides.css";
 
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <LiffEntryGuard>{children}</LiffEntryGuard>
+      </body>
     </html>
   );
 }
