@@ -51,10 +51,14 @@ const getPreferredSource = (url: URL, rawState: string | null) => pickPreferredS
   ...recoverSourcesFromLiffState(rawState),
 ]);
 
-const normalizeToSource = (source: EntrySource, origin: string) => {
+const sourceUrl = (source: EntrySource, origin: string) => {
   const target = new URL("/", origin);
   target.searchParams.set("source", source);
-  window.location.replace(target.toString());
+  return target;
+};
+
+const normalizeToSource = (source: EntrySource, origin: string) => {
+  window.location.replace(sourceUrl(source, origin).toString());
 };
 
 export default function LiffEntryGuard({ children }: { children: ReactNode }) {
@@ -66,14 +70,16 @@ export default function LiffEntryGuard({ children }: { children: ReactNode }) {
     const initialSource = getPreferredSource(initialUrl, initialState);
     const initialSources = initialUrl.searchParams.getAll("source");
 
-    // If the LIFF secondary redirect has already completed and both endpoint and
-    // additional source parameters are present, normalize before the app reads the
-    // first source value. Table always wins over poster, and poster over line.
-    if (!initialState) {
-      if (initialSource && (initialSources.length > 1 || initialSources[0] !== initialSource)) {
-        normalizeToSource(initialSource, initialUrl.origin);
-        return;
-      }
+    // Normalize duplicate source parameters before any page logic reads the first one.
+    if (!initialState && initialSource && initialSources.length > 1) {
+      normalizeToSource(initialSource, initialUrl.origin);
+      return;
+    }
+
+    // Normal LINE/poster entries can continue to the existing page flow.
+    // Table entries are handled here so the customer goes straight to the
+    // digital coloring experience without seeing the coloring-choice screen.
+    if (!initialState && initialSource !== "table") {
       setReady(true);
       return;
     }
@@ -95,18 +101,58 @@ export default function LiffEntryGuard({ children }: { children: ReactNode }) {
 
         const currentUrl = new URL(window.location.href);
         const currentState = currentUrl.searchParams.get("liff.state") || initialState;
-        const restoredSource = getPreferredSource(currentUrl, currentState);
+        const restoredSource = getPreferredSource(currentUrl, currentState) || initialSource;
 
-        // The endpoint may contribute source=line while the QR contributes
-        // source=table. Never let the endpoint value hide the QR source.
-        if (restoredSource) {
+        if (restoredSource === "table") {
+          const cleanTableUrl = sourceUrl("table", currentUrl.origin);
+
+          if (!liff.isLoggedIn()) {
+            liff.login({ redirectUri: cleanTableUrl.toString() });
+            return;
+          }
+
+          const idToken = liff.getIDToken();
+          if (!idToken) throw new Error("line_id_token_missing");
+
+          const sessionResponse = await fetch("/api/line/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken, action: "opened", source: "table" }),
+          });
+          const sessionData = await sessionResponse.json();
+          if (!sessionResponse.ok || !sessionData.coloringPass) {
+            throw new Error(sessionData.error || "table_coloring_pass_failed");
+          }
+
+          const entryResponse = await fetch("/api/coloring/entry", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              idToken,
+              mode: "event",
+              source: "table",
+            }),
+          });
+          const entryData = await entryResponse.json();
+          if (!entryResponse.ok || !entryData.entryUrl) {
+            throw new Error(entryData.error || "coloring_entry_failed");
+          }
+
+          window.location.assign(entryData.entryUrl);
+          return;
+        }
+
+        // LINE and poster entries still use the diagnosis page, but normalize them
+        // only after LIFF initialization has restored the additional parameters.
+        if (restoredSource === "line" || restoredSource === "poster") {
           normalizeToSource(restoredSource, currentUrl.origin);
           return;
         }
 
         setReady(true);
       } catch {
-        // The page's existing LINE handling will show any LIFF error.
+        // If the direct table handoff fails, fall back to the existing page UI so
+        // the customer still gets a visible error/retry path instead of a blank page.
         if (!cancelled) setReady(true);
       }
     })();
