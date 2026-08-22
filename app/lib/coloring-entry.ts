@@ -27,7 +27,10 @@ export const createColoringEntryToken = (
   secret: string,
 ) => {
   const issuedAt = Math.floor(Date.now() / 1000);
-  const lifetime = values.mode === "trial" ? 30 * 60 : 4 * 60 * 60;
+  // Trial links stay intentionally short-lived. Event links last through a full
+  // day so a guest who opened the table QR earlier does not lose access midway
+  // through the visit or when LINE reopens the external LIFF destination later.
+  const lifetime = values.mode === "trial" ? 30 * 60 : 24 * 60 * 60;
   const claims: ColoringEntryClaims = {
     version: 1,
     ...values,
